@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "Từng bước",
+  "short_name": "Từng bước",
+  "description": "Sắp xếp công việc và duy trì thói quen, từng bước mỗi ngày.",
+  "lang": "vi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#F7F3E9",
+  "theme_color": "#F7F3E9",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

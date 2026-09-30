@@ -1,0 +1,24 @@
+{
+  "expo": {
+    "name": "Từng bước",
+    "slug": "tung-buoc",
+    "version": "1.0.0",
+    "icon": "./app-icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F7F3E9",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "name": "Từng bước",
+      "bundler": "metro",
+      "favicon": "./app-icon.png"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
