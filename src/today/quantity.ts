@@ -3,7 +3,7 @@ export const DURATION_UNIT = 'hours and minute';
 export function displayUnit(unit:string,target:number):string {
   if(unit==='steps')return target===1?'step':'steps';
   if(unit==='liter')return target===1?'liter':'liters';
-  if(unit==='time')return target===1?'Time':'Times';
+  if(unit==='time')return target===1?'time':'times';
   return unit;
 }
 export function formatHabitQuantity(value: number, unit: string): string {
