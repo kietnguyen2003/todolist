@@ -66,3 +66,50 @@ test('habit unit labels follow the target and time is available',async({page})=>
   await page.getByRole('button',{name:'Create habit'}).click();
   await expect(page.getByText('0 / 1 time',{exact:true})).toBeVisible();
 });
+
+test('calendar task deletion confirms and removes the full repeating series from both views',async({page})=>{
+  await page.clock.install({time:new Date('2026-09-29T10:00:00+07:00')});
+  await page.goto('/');
+  await page.getByRole('button',{name:'Add task'}).click();
+  await page.getByRole('textbox',{name:'Task name'}).fill('Weekly review');
+  await page.getByRole('radio',{name:'Weekly'}).click();
+  await page.getByRole('button',{name:'Create task'}).click();
+  await page.getByRole('button',{name:'Go to Calendar'}).click();
+  const event=page.getByRole('button',{name:/^Weekly review, 2026-09-29,/});
+  await event.click();
+  await page.getByRole('button',{name:'Delete task'}).click();
+  await expect(page.getByText('This deletes the entire weekly series from To do and Calendar.')).toBeVisible();
+  await page.getByRole('button',{name:'Cancel'}).click();
+  await expect(page.getByRole('heading',{name:'Weekly review'})).toBeVisible();
+  await page.getByRole('button',{name:'Delete task'}).click();
+  await page.getByRole('button',{name:'Delete permanently'}).click();
+  await expect(event).toHaveCount(0);
+  await page.getByRole('button',{name:'Next week'}).click();
+  await expect(page.getByRole('button',{name:/^Weekly review, 2026-10-06,/})).toHaveCount(0);
+  await page.getByRole('button',{name:'Go to To do'}).click();
+  await expect(page.getByRole('checkbox',{name:'Weekly review'})).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole('checkbox',{name:'Weekly review'})).toHaveCount(0);
+});
+
+test('new task colors can be selected on a phone and persist after editing',async({page})=>{
+  await page.clock.install({time:new Date('2026-09-29T10:00:00+07:00')});
+  await page.setViewportSize({width:320,height:844});
+  await page.goto('/');
+  await page.getByRole('button',{name:'Add task'}).click();
+  await page.getByRole('textbox',{name:'Task name'}).fill('Color check');
+  await page.getByRole('button',{name:'Select teal color'}).scrollIntoViewIfNeeded();
+  await page.getByRole('button',{name:'Select teal color'}).click();
+  await page.getByRole('button',{name:'Create task'}).click();
+  await page.getByRole('button',{name:'Go to Calendar'}).click();
+  const event=page.getByRole('button',{name:/^Color check, 2026-09-29,/});
+  await expect(event).toHaveCSS('background-color','rgb(175, 207, 201)');
+  await event.click();
+  await page.getByRole('button',{name:'Select lilac color'}).scrollIntoViewIfNeeded();
+  await page.getByRole('button',{name:'Select lilac color'}).click();
+  await page.getByRole('button',{name:'Close details'}).click();
+  await expect(event).toHaveCSS('background-color','rgb(207, 197, 226)');
+  await page.reload();
+  await page.getByRole('button',{name:'Go to Calendar'}).click();
+  await expect(event).toHaveCSS('background-color','rgb(207, 197, 226)');
+});

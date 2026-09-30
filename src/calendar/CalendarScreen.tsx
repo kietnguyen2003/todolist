@@ -12,6 +12,7 @@ import { usePopupEntrance } from '../today/usePopupEntrance';
 import { formatTime, formatWeekRange, layoutEvents, PIXELS_PER_MINUTE, type CalendarEvent } from './model';
 
 import { TaskForm } from './TaskForm';
+import { TaskColorPicker } from './TaskColorPicker';
 import { tasksToCalendarEvents } from './taskEvents';
 import { TASK_COLORS, type TaskColor } from '../theme';
 import type { Task } from '../today/model';
@@ -19,14 +20,15 @@ import type { Task } from '../today/model';
 const GUTTER=48;
 const HOURS=Array.from({length:25},(_,hour)=>hour);
 const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
-type Props={onCreateTask:(draft:{title:string;date:string;time?:string;endTime?:string;calendarStartTime?:string;recurrence?:Task['recurrence'];color?:Task['color']})=>void;onChangeTaskColor:(id:string,color:TaskColor)=>void;tasks:Task[];onSelect:(section:Section)=>void;useSystemFont?:boolean};
+type Props={onCreateTask:(draft:{title:string;date:string;time?:string;endTime?:string;calendarStartTime?:string;recurrence?:Task['recurrence'];color?:Task['color']})=>void;onChangeTaskColor:(id:string,color:TaskColor)=>void;onDeleteTask:(id:string)=>void;tasks:Task[];onSelect:(section:Section)=>void;useSystemFont?:boolean};
 
-export function CalendarScreen({tasks,onCreateTask,onChangeTaskColor,onSelect,useSystemFont=false}:Props) {
+export function CalendarScreen({tasks,onCreateTask,onChangeTaskColor,onDeleteTask,onSelect,useSystemFont=false}:Props) {
   const {width}=useWindowDimensions();
   const desktop=Platform.OS==='web' && width>=900;
   const {today,selected,setSelected}=useCalendarDay();
   const [availableWidth,setAvailableWidth]=useState(width);
   const [detail,setDetail]=useState<CalendarEvent|null>(null);
+  const [confirmDelete,setConfirmDelete]=useState(false);
   const [slot,setSlot]=useState<{date:string;time:string}|null>(null);
   const vertical=useRef<ScrollView>(null);
   const horizontal=useRef<ScrollView>(null);
@@ -55,7 +57,12 @@ export function CalendarScreen({tasks,onCreateTask,onChangeTaskColor,onSelect,us
     const index=weekDates(date).indexOf(date);
     horizontal.current?.scrollTo({x:Math.min(index*columnWidth,Math.max(0,timelineWidth-availableWidth+GUTTER)),animated:!reducedMotion});
   }
-  const closeDetail=()=>setDetail(null);
+  const closeDetail=()=>{setDetail(null);setConfirmDelete(false);};
+  const deleteSelectedTask=()=>{
+    if(!detail?.taskId)return;
+    onDeleteTask(detail.taskId);
+    closeDetail();
+  };
   return <SystemFontContext.Provider value={useSystemFont}>
     <SafeAreaView style={styles.screen} edges={['top','left','right']}>
       {desktop && <TodayNavigation desktop active="calendar" onSelect={onSelect}/>}
@@ -93,7 +100,7 @@ export function CalendarScreen({tasks,onCreateTask,onChangeTaskColor,onSelect,us
                     const palette=TASK_COLORS[event.color??'navy'];
                     const textColor=palette.text;
                     const eventWidth=(columnWidth-8)/columns;
-                    return <Pressable key={event.id} testID={`calendar-event-${event.id}`} accessibilityRole="button" accessibilityLabel={`${event.title}, ${event.date}, ${formatTime(event.start)} to ${formatTime(event.end)}${event.untimed?', no time set':event.endEstimated?' (estimated end)':''}${event.done ? ', complete' : ', incomplete'}`} onPress={()=>setDetail(event)} style={[styles.event,{top,height,left:4+column*eventWidth,width:eventWidth-3,backgroundColor:palette.background,borderColor:palette.border,opacity:event.done?0.72:1}]}>
+                    return <Pressable key={event.id} testID={`calendar-event-${event.id}`} accessibilityRole="button" accessibilityLabel={`${event.title}, ${event.date}, ${formatTime(event.start)} to ${formatTime(event.end)}${event.untimed?', no time set':event.endEstimated?' (estimated end)':''}${event.done ? ', complete' : ', incomplete'}`} onPress={()=>{setConfirmDelete(false);setDetail(event);}} style={[styles.event,{top,height,left:4+column*eventWidth,width:eventWidth-3,backgroundColor:palette.background,borderColor:palette.border,opacity:event.done?0.72:1}]}>
                       <Copy weight="semibold" numberOfLines={height>=65?2:1} style={[styles.eventName,{color:textColor},event.done && {textDecorationLine:'line-through'}]}>{event.title}</Copy>
                       {height>=65 && <Copy numberOfLines={1} style={[styles.eventTime,{color:palette.muted}]}>{formatTime(event.start)}–{event.untimed?'end of day':formatTime(event.end)}</Copy>}
                     </Pressable>;
@@ -110,7 +117,15 @@ export function CalendarScreen({tasks,onCreateTask,onChangeTaskColor,onSelect,us
         <SafeAreaView style={styles.modalOverlay}>
           <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill,styles.detailScrim,detailEntrance.scrimStyle]}/>
           <Animated.ScrollView testID="calendar-detail" style={[styles.detailScroll,detailEntrance.cardStyle]} contentContainerStyle={styles.detail} accessibilityViewIsModal>
-            <View style={styles.detailHeader}><Copy weight="bold" style={styles.detailHeading}>Task details</Copy><Pressable accessibilityRole="button" accessibilityLabel="Close details" onPress={closeDetail} style={styles.close}><Feather name="x" size={22} color={COLORS.card}/></Pressable></View>
+            <View style={styles.detailHeader}><Copy weight="bold" style={styles.detailHeading}>{confirmDelete?'Delete task':'Task details'}</Copy><Pressable accessibilityRole="button" accessibilityLabel="Close details" onPress={closeDetail} style={styles.close}><Feather name="x" size={22} color={COLORS.card}/></Pressable></View>
+            {confirmDelete ? <>
+              <Copy accessibilityRole="header" weight="bold" style={styles.detailTitle}>Delete {detail?.title}?</Copy>
+              <Copy style={styles.deleteDescription}>{detail?.recurrence?`This deletes the entire ${detail.recurrence} series from To do and Calendar.`:'This removes the task from To do and Calendar.'}</Copy>
+              <View style={styles.deleteActions}>
+                <Pressable accessibilityRole="button" onPress={()=>setConfirmDelete(false)} style={styles.deleteCancel}><Copy weight="semibold">Cancel</Copy></Pressable>
+                <Pressable accessibilityRole="button" onPress={deleteSelectedTask} style={styles.deleteConfirm}><Copy weight="bold" style={styles.deleteConfirmText}>Delete permanently</Copy></Pressable>
+              </View>
+            </> : <>
             {detail && <>
               <Copy accessibilityRole="header" weight="bold" style={styles.detailTitle}>{detail.title}</Copy>
               <Copy style={styles.detailDate}>{detail.done?'Complete':'Incomplete'}{detail.untimed?' · No time set':''}</Copy>
@@ -122,11 +137,13 @@ export function CalendarScreen({tasks,onCreateTask,onChangeTaskColor,onSelect,us
                 <View><Copy style={styles.detailCaption}>{detail.untimed?'End of day':detail.endEstimated?'End (estimated)':'End'}</Copy><Copy weight="bold" style={styles.detailTime}>{formatTime(detail.end)}</Copy></View>
               </View>
               <Copy weight="semibold">Color</Copy>
-              <View style={styles.detailColors}>
-                {(Object.keys(TASK_COLORS) as TaskColor[]).map(color=><Pressable key={color} accessibilityRole="button" accessibilityLabel={`Select ${color} color`} aria-pressed={(detail.color??'navy')===color} onPress={()=>{if(detail.taskId)onChangeTaskColor(detail.taskId,color);setDetail(current=>current?{...current,color}:current);}} style={[styles.detailColor,{backgroundColor:TASK_COLORS[color].background,borderColor:(detail.color??'navy')===color?COLORS.card:TASK_COLORS[color].border}]}>{(detail.color??'navy')===color&&<Feather name="check" size={18} color={TASK_COLORS[color].text}/>}</Pressable>)}
+              <View style={styles.detailColorGrid}>
+                <TaskColorPicker selected={detail.color??'navy'} surface="light" onSelect={color=>{if(detail.taskId)onChangeTaskColor(detail.taskId,color);setDetail(current=>current?{...current,color}:current);}}/>
               </View>
+              {detail.taskId&&<Pressable accessibilityRole="button" accessibilityLabel="Delete task" onPress={()=>setConfirmDelete(true)} style={styles.deleteButton}><Feather name="trash-2" size={17} color={COLORS.errorInk}/><Copy weight="semibold" style={styles.deleteButtonText}>Delete task</Copy></Pressable>}
             </>}
             <Pressable accessibilityRole="button" onPress={closeDetail} style={styles.doneButton}><Copy weight="bold">Done</Copy></Pressable>
+            </>}
           </Animated.ScrollView>
         </SafeAreaView>
       </Modal>
@@ -139,5 +156,5 @@ const styles=StyleSheet.create({
   header:{paddingHorizontal:18,paddingTop:16,paddingBottom:10,gap:12},heading:{gap:5},title:{fontSize:28},subtitle:{fontSize:12,color:COLORS.paperText},toolbar:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',flexWrap:'wrap',gap:8},month:{fontSize:15},controls:{flexDirection:'row',alignItems:'center',gap:4},arrow:{height:44,width:40,alignItems:'center',justifyContent:'center',borderRadius:13,backgroundColor:COLORS.white},todayButton:{height:44,paddingHorizontal:12,justifyContent:'center',borderRadius:13,backgroundColor:COLORS.roseSoft},
   scrollHint:{fontSize:10,color:COLORS.paperText,paddingHorizontal:18,paddingBottom:10},
   calendar:{flex:1,minHeight:0,borderTopWidth:1,borderColor:COLORS.paperBorder,backgroundColor:COLORS.white},columnLabels:{height:42,flexDirection:'row',alignItems:'center',borderBottomWidth:1,borderColor:COLORS.paperBorder},hourCaption:{fontSize:10,color:COLORS.paperText,textAlign:'center'},clip:{flex:1,overflow:'hidden'},columnLabel:{height:42,alignItems:'center',justifyContent:'center',borderLeftWidth:1,borderColor:COLORS.paperBorder},selectedColumnLabel:{backgroundColor:COLORS.roseSoft},columnLabelText:{fontSize:12},verticalScroll:{flex:1},timelineRow:{flexDirection:'row'},hour:{position:'absolute',right:6,fontSize:10,color:COLORS.paperText},horizontalScroll:{flex:1},dayColumn:{borderLeftWidth:1,borderColor:COLORS.paperBorder},selectedColumn:{backgroundColor:COLORS.background},slot:{borderTopWidth:1,borderColor:COLORS.paperBorder,position:'absolute',left:0,right:0,},event:{position:'absolute',borderWidth:1,borderRadius:9,paddingHorizontal:6,paddingVertical:5,overflow:'hidden',justifyContent:'flex-start'},eventName:{fontSize:12,lineHeight:17},eventTime:{fontSize:10,marginTop:4},
-  modalOverlay:{flex:1,justifyContent:'center',alignItems:'center',padding:22},detailScrim:{backgroundColor:COLORS.overlay},detailScroll:{width:'100%',maxWidth:440,maxHeight:'100%',flexGrow:0,flexShrink:1,borderRadius:24,backgroundColor:COLORS.background},detail:{padding:22},detailHeader:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},detailHeading:{fontSize:13,color:COLORS.paperText},close:{width:44,height:44,justifyContent:'center',alignItems:'center'},detailTitle:{fontSize:24,marginTop:12},detailDate:{color:COLORS.paperText,marginTop:10},detailTimes:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',backgroundColor:COLORS.roseSoft,padding:18,borderRadius:16,marginVertical:24},detailCaption:{fontSize:12,color:COLORS.paperText},detailTime:{fontSize:23,marginTop:5},detailColors:{flexDirection:'row',gap:10,marginBottom:20,marginTop:12},detailColor:{width:48,height:44,borderRadius:12,borderWidth:2,alignItems:'center',justifyContent:'center'},doneButton:{height:48,borderRadius:24,backgroundColor:COLORS.accent,alignItems:'center',justifyContent:'center'},
+  modalOverlay:{flex:1,justifyContent:'center',alignItems:'center',padding:22},detailScrim:{backgroundColor:COLORS.overlay},detailScroll:{width:'100%',maxWidth:440,maxHeight:'100%',flexGrow:0,flexShrink:1,borderRadius:24,backgroundColor:COLORS.background},detail:{padding:22},detailHeader:{flexDirection:'row',alignItems:'center',justifyContent:'space-between'},detailHeading:{fontSize:13,color:COLORS.paperText},close:{width:44,height:44,justifyContent:'center',alignItems:'center'},detailTitle:{fontSize:24,marginTop:12},detailDate:{color:COLORS.paperText,marginTop:10},detailTimes:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',backgroundColor:COLORS.roseSoft,padding:18,borderRadius:16,marginVertical:24},detailCaption:{fontSize:12,color:COLORS.paperText},detailTime:{fontSize:23,marginTop:5},detailColorGrid:{marginBottom:20,marginTop:12},deleteButton:{height:44,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,borderRadius:12,backgroundColor:COLORS.roseSoft,marginBottom:10},deleteButtonText:{color:COLORS.errorInk},deleteDescription:{color:COLORS.paperText,lineHeight:20,marginVertical:16},deleteActions:{flexDirection:'row',gap:8},deleteCancel:{flex:1,height:48,alignItems:'center',justifyContent:'center',borderRadius:12,backgroundColor:COLORS.white},deleteConfirm:{flex:1.5,height:48,alignItems:'center',justifyContent:'center',borderRadius:12,backgroundColor:COLORS.errorInk},deleteConfirmText:{color:COLORS.white},doneButton:{height:48,borderRadius:24,backgroundColor:COLORS.accent,alignItems:'center',justifyContent:'center'},
 });

@@ -3,7 +3,8 @@ import { Animated, Easing, Keyboard, KeyboardAvoidingView, Modal, Platform, Pres
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { TimeWheel } from './TimeWheel';
-import { COLORS, FONTS, TASK_COLORS, type TaskColor } from '../theme';
+import { COLORS, FONTS, type TaskColor } from '../theme';
+import { TaskColorPicker } from './TaskColorPicker';
 import { validateTaskDraft } from '../today/model';
 import { Copy, SystemFontContext } from '../today/ui';
 import { useReducedMotion } from '../today/useReducedMotion';
@@ -26,11 +27,12 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
   const [focused,setFocused]=useState<'title'|'date'|null>(null);
   const reveal=useRef(new Animated.Value(0)).current;
   const submitted=useRef(false);
+  const defaultEnd=useRef(true);
   useEffect(()=>{
     if(!slot) return;
     const time=slot.time??'09:00';
     setValues({title:'',date:slot.date,time,endTime:addMinutes(time,30),timed:Boolean(slot.time),recurrence:'none',color:'navy'});
-    setErrors({});submitted.current=false;reveal.setValue(slot.time?1:0);
+    setErrors({});submitted.current=false;defaultEnd.current=true;reveal.setValue(slot.time?1:0);
   },[slot,reveal]);
   useEffect(()=>{
     const animation=Animated.timing(reveal,{toValue:values.timed?1:0,duration:reducedMotion?0:180,easing:Easing.out(Easing.cubic),useNativeDriver:true});
@@ -38,8 +40,15 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
   },[values.timed,reducedMotion,reveal]);
   function close(){Keyboard.dismiss();onClose();}
   function update(field:'title'|'date'|'time'|'endTime',value:string){
+    if(field==='endTime')defaultEnd.current=false;
     setValues(previous=>({...previous,[field]:value}));
     setErrors(previous=>({...previous,[field]:undefined}));
+  }
+  function addDuration(minutes:number){
+    const fromStart=defaultEnd.current;
+    defaultEnd.current=false;
+    setValues(previous=>({...previous,endTime:addMinutes(fromStart?previous.time:previous.endTime,minutes)}));
+    setErrors(previous=>({...previous,endTime:undefined}));
   }
   function submit(){
     if(!slot||submitted.current)return;
@@ -63,15 +72,17 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
               <Copy accessibilityRole="header" weight="bold" style={styles.title}>Add task</Copy>
               <Pressable accessibilityRole="button" accessibilityLabel="Close task form" onPress={close} style={styles.close}><Feather name="x" size={20} color={COLORS.muted}/></Pressable>
             </View>
-            <View style={styles.field}>
-              <Copy weight="semibold" style={styles.label}>Task name</Copy>
-              <TextInput accessibilityLabel="Task name" accessibilityHint={errors.title} value={values.title} onChangeText={value=>update('title',value)} placeholder="What would you like to do?" placeholderTextColor={COLORS.placeholder} selectionColor={COLORS.accent} autoCapitalize="sentences" returnKeyType="done" onSubmitEditing={()=>Keyboard.dismiss()} onFocus={()=>setFocused('title')} onBlur={()=>setFocused(null)} style={[styles.nameInput,{fontFamily:systemFont?undefined:FONTS.medium},focused==='title'&&styles.focused,!!errors.title&&styles.invalid]}/>
-              {!!errors.title&&<Copy role="alert" style={styles.error}>{errors.title}</Copy>}
-            </View>
-            <View style={styles.field}>
-              <Copy weight="semibold" style={styles.label}>Date</Copy>
-              <TextInput accessibilityLabel="Date" accessibilityHint="Use YYYY-MM-DD, for example 2026-09-30" value={values.date} onChangeText={value=>update('date',value)} placeholder="YYYY-MM-DD" placeholderTextColor={COLORS.placeholder} keyboardType="numbers-and-punctuation" autoCapitalize="none" autoCorrect={false} onFocus={()=>setFocused('date')} onBlur={()=>setFocused(null)} style={[styles.input,{fontFamily:systemFont?undefined:FONTS.regular},focused==='date'&&styles.focused,!!errors.date&&styles.invalid]}/>
-              {!!errors.date&&<Copy role="alert" style={styles.error}>{errors.date}</Copy>}
+            <View style={styles.detailsRow}>
+              <View style={[styles.field,styles.compactField]}>
+                <Copy weight="semibold" style={styles.label}>Task name</Copy>
+                <TextInput accessibilityLabel="Task name" accessibilityHint={errors.title} value={values.title} onChangeText={value=>update('title',value)} placeholder="What to do?" placeholderTextColor={COLORS.placeholder} selectionColor={COLORS.accent} autoCapitalize="sentences" returnKeyType="done" onSubmitEditing={()=>Keyboard.dismiss()} onFocus={()=>setFocused('title')} onBlur={()=>setFocused(null)} style={[styles.nameInput,{fontFamily:systemFont?undefined:FONTS.medium},focused==='title'&&styles.focused,!!errors.title&&styles.invalid]}/>
+                {!!errors.title&&<Copy role="alert" style={styles.error}>{errors.title}</Copy>}
+              </View>
+              <View style={[styles.field,styles.compactField]}>
+                <Copy weight="semibold" style={styles.label}>Date</Copy>
+                <TextInput accessibilityLabel="Date" accessibilityHint="Use YYYY-MM-DD, for example 2026-09-30" value={values.date} onChangeText={value=>update('date',value)} placeholder="YYYY-MM-DD" placeholderTextColor={COLORS.placeholder} keyboardType="numbers-and-punctuation" autoCapitalize="none" autoCorrect={false} onFocus={()=>setFocused('date')} onBlur={()=>setFocused(null)} style={[styles.input,{fontFamily:systemFont?undefined:FONTS.regular},focused==='date'&&styles.focused,!!errors.date&&styles.invalid]}/>
+                {!!errors.date&&<Copy role="alert" style={styles.error}>{errors.date}</Copy>}
+              </View>
             </View>
             <View accessibilityRole="radiogroup" style={styles.modeRow}>
               {([false,true] as const).map(timed=><Pressable key={String(timed)} accessibilityRole="radio" aria-checked={values.timed===timed} onPress={()=>{Keyboard.dismiss();setValues(previous=>({...previous,timed}));setErrors(previous=>({...previous,time:undefined,endTime:undefined}));}} style={[styles.mode,values.timed===timed&&styles.modeSelected]}><Copy weight="semibold" style={[styles.modeText,values.timed===timed&&styles.modeTextSelected]}>{timed?'Set time':'No time'}</Copy></Pressable>)}
@@ -84,7 +95,7 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
               {!!errors.time&&<Copy role="alert" style={styles.error}>{errors.time}</Copy>}
               {!!errors.endTime&&<Copy role="alert" style={styles.error}>{errors.endTime}</Copy>}
               <View style={styles.shortcuts}>
-                {[30,60,90].map(minutes=><Pressable key={minutes} accessibilityRole="button" accessibilityLabel={`Duration ${minutes} minutes`} onPress={()=>update('endTime',addMinutes(values.time,minutes))} style={({pressed})=>[styles.shortcut,pressed&&styles.pressed]}><Copy style={styles.shortcutText}>+{minutes<60?`${minutes}m`:minutes===60?'1h':'1h30'}</Copy></Pressable>)}
+                {[30,60,90].map(minutes=><Pressable key={minutes} accessibilityRole="button" accessibilityLabel={`Duration ${minutes} minutes`} onPress={()=>addDuration(minutes)} style={({pressed})=>[styles.shortcut,pressed&&styles.pressed]}><Copy style={styles.shortcutText}>+{minutes<60?`${minutes}m`:minutes===60?'1h':'1h30'}</Copy></Pressable>)}
               </View>
             </Animated.View>}
             <View style={styles.field}>
@@ -95,9 +106,7 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
             </View>
             <View style={styles.field}>
               <Copy weight="semibold" style={styles.label}>Color</Copy>
-              <View style={styles.colors}>
-                {(Object.keys(TASK_COLORS) as TaskColor[]).map(color=><Pressable key={color} accessibilityRole="button" accessibilityLabel={`Select ${color} color`} aria-pressed={values.color===color} onPress={()=>setValues(previous=>({...previous,color}))} style={[styles.colorChoice,{backgroundColor:TASK_COLORS[color].background,borderColor:values.color===color?COLORS.white:TASK_COLORS[color].border}]}>{values.color===color&&<Feather name="check" size={18} color={TASK_COLORS[color].text}/>}</Pressable>)}
-              </View>
+              <TaskColorPicker selected={values.color} surface="dark" onSelect={color=>setValues(previous=>({...previous,color}))}/>
             </View>
             <Pressable accessibilityRole="button" accessibilityLabel="Create task" onPress={submit} style={({pressed})=>[styles.submit,pressed&&styles.submitPressed]}><Feather name="plus" size={18} color={COLORS.card}/><Copy weight="bold">Create task</Copy></Pressable>
           </Animated.View>
@@ -109,9 +118,9 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
 const styles=StyleSheet.create({
   flex:{flex:1},backdrop:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:COLORS.overlay},page:{flexGrow:1,alignItems:'center',justifyContent:'center',paddingHorizontal:12,paddingVertical:8},card:{width:'100%',maxWidth:400,borderRadius:20,backgroundColor:COLORS.card,padding:16,gap:10},
   heading:{flexDirection:'row',alignItems:'center',gap:8},title:{flex:1,color:COLORS.white,fontSize:20},close:{width:44,height:44,alignItems:'center',justifyContent:'center',borderRadius:13,backgroundColor:COLORS.input},
-  field:{gap:4},label:{color:COLORS.white,fontSize:12},input:{height:44,borderRadius:12,borderWidth:1,borderColor:COLORS.inputBorder,backgroundColor:COLORS.input,paddingHorizontal:12,color:COLORS.white,fontSize:16},nameInput:{height:48,borderRadius:12,borderWidth:1,borderColor:COLORS.inputBorder,backgroundColor:COLORS.input,paddingHorizontal:12,color:COLORS.white,fontSize:16},focused:{borderColor:COLORS.accent},invalid:{borderColor:COLORS.error},error:{color:COLORS.error,fontSize:12},
+  field:{gap:4},detailsRow:{flexDirection:'row',gap:8},compactField:{flex:1,minWidth:0},label:{color:COLORS.white,fontSize:12},input:{height:42,borderRadius:12,borderWidth:1,borderColor:COLORS.inputBorder,backgroundColor:COLORS.input,paddingHorizontal:10,color:COLORS.white,fontSize:14},nameInput:{height:42,borderRadius:12,borderWidth:1,borderColor:COLORS.inputBorder,backgroundColor:COLORS.input,paddingHorizontal:10,color:COLORS.white,fontSize:14},focused:{borderColor:COLORS.accent},invalid:{borderColor:COLORS.error},error:{color:COLORS.error,fontSize:12},
   modeRow:{flexDirection:'row',gap:4,padding:3,backgroundColor:COLORS.input,borderRadius:13},mode:{flex:1,minHeight:44,borderRadius:10,alignItems:'center',justifyContent:'center'},modeSelected:{backgroundColor:COLORS.accent},modeText:{fontSize:12,color:COLORS.muted},modeTextSelected:{color:COLORS.card},
-  choiceRow:{flexDirection:'row',gap:6},choice:{flex:1,minHeight:44,borderRadius:12,backgroundColor:COLORS.input,alignItems:'center',justifyContent:'center',paddingHorizontal:4},choiceSelected:{backgroundColor:COLORS.accent},choiceText:{fontSize:12,color:COLORS.muted},choiceTextSelected:{color:COLORS.card},colors:{flexDirection:'row',gap:10},colorChoice:{width:48,height:44,borderRadius:13,borderWidth:2,alignItems:'center',justifyContent:'center'},
+  choiceRow:{flexDirection:'row',gap:6},choice:{flex:1,minHeight:44,borderRadius:12,backgroundColor:COLORS.input,alignItems:'center',justifyContent:'center',paddingHorizontal:4},choiceSelected:{backgroundColor:COLORS.accent},choiceText:{fontSize:12,color:COLORS.muted},choiceTextSelected:{color:COLORS.card},
   timeRow:{flexDirection:'row',gap:8,marginTop:2},shortcuts:{flexDirection:'row',gap:8,marginTop:8},shortcut:{minHeight:40,minWidth:64,paddingHorizontal:12,alignItems:'center',justifyContent:'center',borderRadius:11,backgroundColor:COLORS.input},shortcutText:{fontSize:12,color:COLORS.muted},pressed:{opacity:0.65},
   submit:{minHeight:48,marginTop:2,borderRadius:999,backgroundColor:COLORS.accent,alignItems:'center',justifyContent:'center',flexDirection:'row',gap:8},submitPressed:{backgroundColor:COLORS.accentPressed},
 });

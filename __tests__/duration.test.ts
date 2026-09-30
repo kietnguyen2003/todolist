@@ -18,3 +18,10 @@ test('count units agree with the selected target and support time',()=>{
   assert.equal(formatHabitProgress(0,1,'steps'),'0 / 1 step');
   assert.equal(formatHabitProgress(1,2,'time'),'1 / 2 times');
 });
+test('duration unit label agrees with the selected hours and minutes',()=>{
+  assert.equal(displayUnit('hours and minute',1),'hours and minute');
+  assert.equal(displayUnit('hours and minute',60),'hour and minutes');
+  assert.equal(displayUnit('hours and minute',61),'hour and minute');
+  assert.equal(displayUnit('hours and minute',90),'hour and minutes');
+  assert.equal(displayUnit('hours and minute',120),'hours and minutes');
+});

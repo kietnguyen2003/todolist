@@ -51,3 +51,9 @@ test('repeating colored tasks survive storage and reject invalid occurrence data
     assert.throws(()=>encodeTodayState({...state,tasks:[task as typeof base]}));
   }
 });
+test('new task colors survive local storage',()=>{
+  for(const color of ['lilac','sky','peach','olive','teal'] as const) {
+    const state={...emptyTodayState(),tasks:[{id:'color',title:'Task',date:'2026-09-29',done:false,icon:'check-square' as const,color}]};
+    assert.deepEqual(decodeTodayState(encodeTodayState(state)),state);
+  }
+});

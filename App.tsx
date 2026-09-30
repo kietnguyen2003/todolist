@@ -50,7 +50,7 @@ export default function App() {
         </View>
       ) : (
         screen === 'calendar' ? (
-          <CalendarScreen onCreateTask={addTask} onChangeTaskColor={(id,color)=>dispatch({type:'setTaskColor',id,color})} tasks={todayState.tasks} useSystemFont={Boolean(fontError)} onSelect={navigate} />
+          <CalendarScreen onCreateTask={addTask} onChangeTaskColor={(id,color)=>dispatch({type:'setTaskColor',id,color})} onDeleteTask={id=>dispatch({type:'deleteTask',id})} tasks={todayState.tasks} useSystemFont={Boolean(fontError)} onSelect={navigate} />
         ) : (
           <TodayScreen onCreateTask={addTask} onCalendar={() => navigate('calendar')} useSystemFont={Boolean(fontError)} state={todayState} dispatch={dispatch} />
         )

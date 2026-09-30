@@ -1,7 +1,9 @@
+import { isTaskColor, type TaskColor } from '../theme.ts';
+
 export type Habit = { id:string; name:string; target:number; unit:string; startDate:string; icon:'droplet'|'book-open'|'activity' };
-export type Task = { id:string; date:string; title:string; time?:string; endTime?:string; calendarStartTime?:string; recurrence?:'weekly'|'monthly'; completedDates?:string[]; color?:'navy'|'rose'|'sage'|'sand'; done:boolean; icon:'book-open'|'shopping-bag'|'mail'|'check-square' };
+export type Task = { id:string; date:string; title:string; time?:string; endTime?:string; calendarStartTime?:string; recurrence?:'weekly'|'monthly'; completedDates?:string[]; color?:TaskColor; done:boolean; icon:'book-open'|'shopping-bag'|'mail'|'check-square' };
 export type TodayState = {tasks:Task[]; habits:Habit[]; counts:Record<string,Record<string,number>>};
-export type TodayAction = {type:'addTask';task:Task}|{type:'toggleTask';id:string;date:string}|{type:'setTaskColor';id:string;color:NonNullable<Task['color']>}|{type:'setCount';id:string;date:string;count:number}|{type:'addHabit';habit:Habit}|{type:'updateHabit';id:string;name:string;target:number;unit:string}|{type:'deleteHabit';id:string};
+export type TodayAction = {type:'addTask';task:Task}|{type:'toggleTask';id:string;date:string}|{type:'setTaskColor';id:string;color:NonNullable<Task['color']>}|{type:'deleteTask';id:string}|{type:'setCount';id:string;date:string;count:number}|{type:'addHabit';habit:Habit}|{type:'updateHabit';id:string;name:string;target:number;unit:string}|{type:'deleteHabit';id:string};
 
 export function dateKey(date:Date):string {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -55,7 +57,7 @@ export function todayReducer(state:TodayState,action:TodayAction):TodayState {
       const {task}=action;
       if(state.tasks.some(item=>item.id===task.id) || Object.keys(validateTaskDraft(task.title,task.date,task.time,task.endTime)).length
         || (task.recurrence!==undefined && !['weekly','monthly'].includes(task.recurrence))
-        || (task.color!==undefined && !['navy','rose','sage','sand'].includes(task.color))
+        || (task.color!==undefined && !isTaskColor(task.color))
         || (task.calendarStartTime!==undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(task.calendarStartTime))) return state;
       return {...state,tasks:[...state.tasks,{...task,title:task.title.trim(),done:false}]};
     }
@@ -66,8 +68,12 @@ export function todayReducer(state:TodayState,action:TodayAction):TodayState {
       return {...task,completedDates:dates.includes(action.date)?dates.filter(date=>date!==action.date):[...dates,action.date].sort()};
     })};
     case 'setTaskColor': {
-      if(!['navy','rose','sage','sand'].includes(action.color) || !state.tasks.some(task=>task.id===action.id))return state;
+      if(!isTaskColor(action.color) || !state.tasks.some(task=>task.id===action.id))return state;
       return {...state,tasks:state.tasks.map(task=>task.id===action.id?{...task,color:action.color}:task)};
+    }
+    case 'deleteTask': {
+      if(!state.tasks.some(task=>task.id===action.id))return state;
+      return {...state,tasks:state.tasks.filter(task=>task.id!==action.id)};
     }
     case 'setCount': {
       const habit=state.habits.find(item=>item.id===action.id);

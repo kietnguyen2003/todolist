@@ -55,8 +55,10 @@ test('combined hours and minute unit reveals two wheels and stores duration corr
   await expect(minutes).toBeVisible();
   await hours.press('Home');
   await hours.press('ArrowUp');
+  await expect(unit).toHaveAttribute('aria-valuetext','hour and minute');
   await minutes.press('Home');
   for(let i=0;i<30;i++) await minutes.press('ArrowUp');
+  await expect(unit).toHaveAttribute('aria-valuetext','hour and minutes');
   const h=(await hours.boundingBox())!, m=(await minutes.boundingBox())!, u=(await unit.boundingBox())!;
   expect(h.x+h.width).toBeLessThanOrEqual(m.x);
   expect(m.x+m.width).toBeLessThanOrEqual(u.x);
@@ -69,6 +71,7 @@ test('combined hours and minute unit reveals two wheels and stores duration corr
   await unit.press('ArrowUp');
   await expect(hours).toHaveAttribute('aria-valuetext','1');
   await expect(minutes).toHaveAttribute('aria-valuetext','30');
+  await expect(unit).toHaveAttribute('aria-valuetext','hour and minutes');
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
   await expect(page.getByText('0 hr 0 min / 1 hr 30 min',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Update Học tập',exact:true}).click();

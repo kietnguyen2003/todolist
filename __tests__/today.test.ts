@@ -20,6 +20,16 @@ test('task completion is reversible and scoped by date', () => {
   assert.equal(todayReducer(state,{type:'toggleTask',id:'t1',date:'2026-09-28'}).tasks[0].done,false);
   assert.equal(tasksForDate(state,'2026-09-28').length,0);
 });
+test('deleting a calendar task removes its entire series without changing habits or other tasks', () => {
+  const repeating={...state.tasks[0],id:'repeat',recurrence:'weekly' as const,completedDates:['2026-10-04']};
+  const populated={...state,tasks:[...state.tasks,repeating]};
+  const deleted=todayReducer(populated,{type:'deleteTask',id:'repeat'});
+  assert.deepEqual(deleted.tasks,state.tasks);
+  assert.deepEqual(deleted.habits,state.habits);
+  assert.deepEqual(deleted.counts,state.counts);
+  assert.deepEqual(populated.tasks,[...state.tasks,repeating]);
+  assert.equal(todayReducer(deleted,{type:'deleteTask',id:'missing'}),deleted);
+});
 test('habit quantity persists by date, permits exceeding target and rejects invalid input', () => {
   const next=todayReducer(state,{type:'setCount',id:'h1',date:'2026-09-27',count:10});
   assert.equal(habitCount(next,'h1','2026-09-27'),10);
@@ -91,4 +101,12 @@ test('changing a task color updates the saved task without changing completion',
   assert.equal(updated.tasks[0].color,'sage');
   assert.equal(updated.tasks[0].done,false);
   assert.equal(state.tasks[0].color,undefined);
+});
+test('new task colors are accepted for creation and updates',()=>{
+  for(const color of ['lilac','sky','peach','olive','teal'] as const) {
+    const created=todayReducer(state,{type:'addTask',task:{...state.tasks[0],id:`task-${color}`,time:undefined,color}});
+    assert.equal(created.tasks.at(-1)?.color,color);
+    const updated=todayReducer(state,{type:'setTaskColor',id:'t1',color});
+    assert.equal(updated.tasks[0].color,color);
+  }
 });

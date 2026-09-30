@@ -8,7 +8,7 @@ import Feather from '@expo/vector-icons/Feather';
 import { COLORS, FONTS } from '../theme';
 import { validateHabitDraft, type Habit } from './model';
 import { WheelPicker } from './WheelPicker';
-import { displayUnit } from './quantity';
+import { DURATION_UNIT, displayUnit } from './quantity';
 import { useReducedMotion } from './useReducedMotion';
 import { usePopupEntrance } from './usePopupEntrance';
 
@@ -35,12 +35,12 @@ export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = fal
   const entrance=usePopupEntrance(visible,reducedMotion);
   const [values, setValues] = useState(INITIAL_VALUES);
   const units=habit && !UNITS.some(unit=>unit===habit.unit)?[...UNITS,habit.unit]:UNITS;
-  const isTime = values.unit === 'hours and minute';
+  const isTime = values.unit === DURATION_UNIT;
   // Keep older saved targets selectable while the picker for new values stays at 0–100.
   const quantityOptions=values.quantity>100?[...TARGETS,String(values.quantity)]:TARGETS;
   const hourOptions=values.hours>100?[...TARGETS,String(values.hours)]:TARGETS;
   const target = isTime ? values.hours * 60 + values.minutes : values.quantity;
-  const unitLabels=units.map(unit=>displayUnit(unit,target));
+  const unitLabels=units.map(unit=>displayUnit(unit,unit===DURATION_UNIT?values.hours*60+values.minutes:values.quantity));
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [focused, setFocused] = useState<Field | null>(null);
   const nameRef = useRef<TextInput>(null);

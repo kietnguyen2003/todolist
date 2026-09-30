@@ -1,4 +1,5 @@
 import { dateKey, localDate, taskOccursOn, type TodayState, type Task } from '../today/model.ts';
+import { isTaskColor } from '../theme.ts';
 
 export const TODAY_STORAGE_KEY = 'tung-buoc:today:v1';
 export const TODAY_STORAGE_VERSION = 1;
@@ -30,7 +31,7 @@ function validState(value: unknown): value is TodayState {
       || !text(task.title, 120) || (task.time !== undefined && !clock(task.time))
       || (task.calendarStartTime !== undefined && !clock(task.calendarStartTime)) || typeof task.done !== 'boolean'
       || (task.recurrence !== undefined && !['weekly','monthly'].includes(String(task.recurrence)))
-      || (task.color !== undefined && !['navy','rose','sage','sand'].includes(String(task.color)))
+      || (task.color !== undefined && !isTaskColor(task.color))
       || !['book-open', 'shopping-bag', 'mail', 'check-square'].includes(String(task.icon))) return false;
     if (task.endTime !== undefined && (!task.time || !(clock(task.endTime) || task.endTime === '24:00') || task.endTime <= task.time)) return false;
     if (task.completedDates !== undefined && (!task.recurrence || !Array.isArray(task.completedDates)
