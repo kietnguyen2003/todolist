@@ -57,9 +57,9 @@ export function usePersistentTodayState() {
     if (failure === 'save') setSaveAttempt(value => value + 1);
   }, [failure]);
   const error = failure === 'load'
-    ? 'Không thể đọc dữ liệu trên máy. Dữ liệu cũ vẫn được giữ nguyên. Hãy thử lại.'
+    ? 'Could not read local data. Your existing data has not been changed. Please try again.'
     : failure === 'save'
-      ? 'Chưa lưu được thay đổi trên máy. Hãy thử lại trước khi đóng ứng dụng.'
+      ? 'Changes could not be saved locally. Please retry before closing the app.'
       : null;
   return { state: snapshot.state, dispatch, ready, error, retry };
 }

@@ -3,13 +3,13 @@ export type LoginErrors = { email?: string; password?: string };
 export function validateLogin(email: string, password: string): LoginErrors {
   const trimmedEmail = email.trim();
   const emailError = !trimmedEmail
-    ? 'Bạn chưa nhập email.'
+    ? 'Enter your email.'
     : !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
-      ? 'Email chưa đúng định dạng. Ví dụ: ban@email.com'
+      ? 'Enter a valid email, for example you@email.com.'
       : undefined;
 
   return {
     ...(emailError ? { email: emailError } : {}),
-    ...(!password.trim() ? { password: 'Bạn chưa nhập mật khẩu.' } : {}),
+    ...(!password.trim() ? { password: 'Enter your password.' } : {}),
   };
 }

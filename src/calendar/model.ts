@@ -9,6 +9,7 @@ export type CalendarEvent = {
   end: number;
   done?: boolean;
   endEstimated?: boolean;
+  untimed?: boolean;
   tone: 'rose' | 'navy' | 'cream';
 };
 export type PositionedEvent = {
@@ -24,10 +25,11 @@ export const MIN_EVENT_HEIGHT = 44;
 
 export function formatWeekRange(start:string,end:string):string {
   const first=localDate(start),last=localDate(end);
-  const a=`${first.getDate()} Thg ${first.getMonth()+1}`;
-  const b=`${last.getDate()} Thg ${last.getMonth()+1}`;
+  const month=(date:Date)=>new Intl.DateTimeFormat('en',{month:'short'}).format(date);
+  const a=`${month(first)} ${first.getDate()}`;
+  const b=`${month(last)} ${last.getDate()}`;
   if(first.getFullYear()!==last.getFullYear()) return `${a}, ${first.getFullYear()} – ${b}, ${last.getFullYear()}`;
-  if(first.getMonth()===last.getMonth()) return `${first.getDate()} – ${b}`;
+  if(first.getMonth()===last.getMonth()) return `${month(first)} ${first.getDate()}–${last.getDate()}`;
   return `${a} – ${b}`;
 }
 

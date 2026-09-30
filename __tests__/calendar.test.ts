@@ -39,7 +39,7 @@ test('invalid dates and time ranges are ignored', () => {
 });
 
 test('week header uses dates rather than month-only labels',()=>{
-  assert.equal(formatWeekRange('2026-10-05','2026-10-11'),'5 – 11 Thg 10');
-  assert.equal(formatWeekRange('2026-09-28','2026-10-04'),'28 Thg 9 – 4 Thg 10');
-  assert.equal(formatWeekRange('2026-12-28','2027-01-03'),'28 Thg 12, 2026 – 3 Thg 1, 2027');
+  assert.equal(formatWeekRange('2026-10-05','2026-10-11'),'Oct 5–11');
+  assert.equal(formatWeekRange('2026-09-28','2026-10-04'),'Sep 28 – Oct 4');
+  assert.equal(formatWeekRange('2026-12-28','2027-01-03'),'Dec 28, 2026 – Jan 3, 2027');
 });

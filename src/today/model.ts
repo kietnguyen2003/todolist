@@ -1,7 +1,7 @@
 export type Habit = { id:string; name:string; target:number; unit:string; startDate:string; icon:'droplet'|'book-open'|'activity' };
-export type Task = { id:string; date:string; title:string; time?:string; endTime?:string; done:boolean; icon:'book-open'|'shopping-bag'|'mail'|'check-square' };
+export type Task = { id:string; date:string; title:string; time?:string; endTime?:string; calendarStartTime?:string; done:boolean; icon:'book-open'|'shopping-bag'|'mail'|'check-square' };
 export type TodayState = {tasks:Task[]; habits:Habit[]; counts:Record<string,Record<string,number>>};
-export type TodayAction = {type:'addTask';task:Task}|{type:'toggleTask';id:string;date:string}|{type:'setCount';id:string;date:string;count:number}|{type:'addHabit';habit:Habit};
+export type TodayAction = {type:'addTask';task:Task}|{type:'toggleTask';id:string;date:string}|{type:'setCount';id:string;date:string;count:number}|{type:'addHabit';habit:Habit}|{type:'updateHabit';id:string;name:string;target:number;unit:string}|{type:'deleteHabit';id:string};
 
 export function dateKey(date:Date):string {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -20,9 +20,9 @@ export function weekDates(date:string):string[] {
 }
 export function validateHabitDraft(name:string,target:string,unit:string):{name?:string;target?:string;unit?:string} {
   return {
-    ...(!name.trim() || name.trim().length>60 ? {name:'Nhập tên thói quen từ 1 đến 60 ký tự.'}:{}),
-    ...(!/^\d+$/.test(target.trim()) || Number(target)<1 || Number(target)>100000 ? {target:'Mục tiêu phải là số nguyên từ 1 đến 100.000.'}:{}),
-    ...(!unit.trim() || unit.trim().length>20 ? {unit:'Nhập đơn vị từ 1 đến 20 ký tự, ví dụ: cốc, phút, trang.'}:{}),
+    ...(!name.trim() || name.trim().length>60 ? {name:'Enter a habit name with 1 to 60 characters.'}:{}),
+    ...(!/^\d+$/.test(target.trim()) || Number(target)<1 || Number(target)>100000 ? {target:'The target must be a whole number from 1 to 100,000.'}:{}),
+    ...(!unit.trim() || unit.trim().length>20 ? {unit:'Enter a unit with 1 to 20 characters.'}:{}),
   };
 }
 export function validateTaskDraft(title:string,date:string,time?:string,endTime?:string):{title?:string;date?:string;time?:string;endTime?:string} {
@@ -30,17 +30,18 @@ export function validateTaskDraft(title:string,date:string,time?:string,endTime?
   const startValid=typeof time==='string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
   const endValid=typeof endTime==='string' && (/^([01]\d|2[0-3]):[0-5]\d$/.test(endTime) || endTime==='24:00');
   return {
-    ...(!title.trim() || title.trim().length>120 ? {title:'Nhập tên công việc từ 1 đến 120 ký tự.'}:{}),
-    ...(!/^\d{4}-\d{2}-\d{2}$/.test(date) || dateKey(localDate(date))!==date ? {date:'Ngày không hợp lệ.'}:{}),
-    ...(timed && !startValid ? {time:'Nhập giờ bắt đầu theo HH:mm, từ 00:00 đến 23:59.'}:{}),
-    ...(timed && (!endValid || (startValid && endTime!<=time!)) ? {endTime:'Giờ kết thúc phải sau giờ bắt đầu, tối đa 24:00.'}:{}),
+    ...(!title.trim() || title.trim().length>120 ? {title:'Enter a task name with 1 to 120 characters.'}:{}),
+    ...(!/^\d{4}-\d{2}-\d{2}$/.test(date) || dateKey(localDate(date))!==date ? {date:'Enter a valid date.'}:{}),
+    ...(timed && !startValid ? {time:'Enter a start time from 00:00 to 23:59.'}:{}),
+    ...(timed && (!endValid || (startValid && endTime!<=time!)) ? {endTime:'End time must be after start time, up to 24:00.'}:{}),
   };
 }
 export function todayReducer(state:TodayState,action:TodayAction):TodayState {
   switch(action.type) {
     case 'addTask': {
       const {task}=action;
-      if(state.tasks.some(item=>item.id===task.id) || Object.keys(validateTaskDraft(task.title,task.date,task.time,task.endTime)).length) return state;
+      if(state.tasks.some(item=>item.id===task.id) || Object.keys(validateTaskDraft(task.title,task.date,task.time,task.endTime)).length
+        || (task.calendarStartTime!==undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(task.calendarStartTime))) return state;
       return {...state,tasks:[...state.tasks,{...task,title:task.title.trim(),done:false}]};
     }
     case 'toggleTask': return {...state,tasks:state.tasks.map(task=>task.id===action.id && task.date===action.date ? {...task,done:!task.done}:task)};
@@ -53,6 +54,15 @@ export function todayReducer(state:TodayState,action:TodayAction):TodayState {
       const {habit}=action;
       if(state.habits.some(item=>item.id===habit.id) || Object.keys(validateHabitDraft(habit.name,String(habit.target),habit.unit)).length) return state;
       return {...state,habits:[...state.habits,{...habit,name:habit.name.trim(),unit:habit.unit.trim()}]};
+    }
+    case 'updateHabit': {
+      if(!state.habits.some(habit=>habit.id===action.id) || Object.keys(validateHabitDraft(action.name,String(action.target),action.unit)).length) return state;
+      return {...state,habits:state.habits.map(habit=>habit.id===action.id?{...habit,name:action.name.trim(),target:action.target,unit:action.unit.trim()}:habit)};
+    }
+    case 'deleteHabit': {
+      if(!state.habits.some(habit=>habit.id===action.id)) return state;
+      const counts=Object.fromEntries(Object.entries(state.counts).map(([date,values])=>[date,Object.fromEntries(Object.entries(values).filter(([id])=>id!==action.id))]).filter(([,values])=>Object.keys(values).length));
+      return {...state,habits:state.habits.filter(habit=>habit.id!==action.id),counts};
     }
   }
 }

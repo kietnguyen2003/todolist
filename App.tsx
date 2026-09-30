@@ -15,21 +15,19 @@ import { usePersistentTodayState } from './src/storage/usePersistentTodayState';
 import type { Task } from './src/today/model';
 
 export default function App() {
-  const [screen, setScreen] = useState<'today' | 'calendar'>('today');
-  const [todaySection, setTodaySection] = useState<Exclude<Section,'calendar'>>('today');
+  const [screen, setScreen] = useState<Section>('todo');
   function navigate(section: Section) {
-    if(section==='calendar') {setScreen('calendar');return;}
-    setTodaySection(section);setScreen('today');
+    setScreen(section);
   }
   const {state:todayState,dispatch,ready,error,retry}=usePersistentTodayState();
   const taskSequence=useRef(0);
-  function addTask(draft:Pick<Task,'title'|'date'|'time'|'endTime'>) {
+  function addTask(draft:Pick<Task,'title'|'date'|'time'|'endTime'|'calendarStartTime'>) {
     dispatch({type:'addTask',task:{...draft,id:`task-${Date.now()}-${taskSequence.current++}`,done:false,icon:'check-square'}});
   }
   const events = useMemo(() => tasksToCalendarEvents(todayState.tasks), [todayState.tasks]);
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (screen === 'calendar') { navigate('today'); return true; }
+      if (screen === 'calendar') { navigate('todo'); return true; }
       return false;
     });
     return () => listener.remove();
@@ -46,17 +44,17 @@ export default function App() {
       <StatusBar barStyle="dark-content" />
       {error && <View accessibilityRole="alert" style={styles.storageError}>
         <Text style={styles.errorText}>{error}</Text>
-        <Pressable accessibilityRole="button" accessibilityLabel="Thử lại lưu trữ" onPress={retry} style={styles.retry}><Text style={styles.retryText}>Thử lại</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Retry storage" onPress={retry} style={styles.retry}><Text style={styles.retryText}>Try again</Text></Pressable>
       </View>}
       {(!fontsLoaded && !fontError) || !ready ? (
         <View style={styles.loading}>
-          {!error && <ActivityIndicator color={COLORS.card} accessibilityLabel="Đang tải giao diện" />}
+          {!error && <ActivityIndicator color={COLORS.card} accessibilityLabel="Loading app" />}
         </View>
       ) : (
         screen === 'calendar' ? (
           <CalendarScreen onCreateTask={addTask} events={events} useSystemFont={Boolean(fontError)} onSelect={navigate} />
         ) : (
-          <TodayScreen onCreateTask={addTask} initialSection={todaySection} onCalendar={() => navigate('calendar')} useSystemFont={Boolean(fontError)} state={todayState} dispatch={dispatch} />
+          <TodayScreen onCreateTask={addTask} onCalendar={() => navigate('calendar')} useSystemFont={Boolean(fontError)} state={todayState} dispatch={dispatch} />
         )
       )}
     </SafeAreaProvider>

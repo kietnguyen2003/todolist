@@ -43,7 +43,7 @@ export function LoginScreen({ useSystemFont = false, onContinue }: Props) {
     }
     setReady(true);
     if (Platform.OS === 'ios') {
-      AccessibilityInfo.announceForAccessibility('Giao diện đăng nhập đã sẵn sàng');
+      AccessibilityInfo.announceForAccessibility('The sign-in screen is ready');
     }
   }
 
@@ -71,17 +71,17 @@ export function LoginScreen({ useSystemFont = false, onContinue }: Props) {
                 </View>
                 <View style={styles.brandCopy}>
                   <Text style={[styles.brandName, font('bold')]}>Tea Pret</Text>
-                  <Text style={[styles.brandCaption, font('medium')]}>VIỆC NHỎ. NGÀY Ý NGHĨA.</Text>
+                  <Text style={[styles.brandCaption, font('medium')]}>SMALL STEPS. MEANINGFUL DAYS.</Text>
                 </View>
               </View>
 
               <View style={styles.intro}>
-                <Text style={[styles.eyebrow, font('semibold')]}>MỘT NGÀY MỚI, MỘT BƯỚC TIẾN</Text>
+                <Text style={[styles.eyebrow, font('semibold')]}>A NEW DAY, A NEW STEP</Text>
                 <Text accessibilityRole="header" style={[styles.title, compact && styles.compactTitle, font('bold')]}>
-                  Chào mừng bạn{ '\n' }trở lại.
+                  Welcome{ '\n' }back.
                 </Text>
                 <Text style={[styles.description, font()]}>
-                  Sắp xếp việc hôm nay,{ '\n' }dành chỗ cho điều quan trọng.
+                  Plan today's tasks,{ '\n' }make room for what matters.
                 </Text>
               </View>
 
@@ -98,7 +98,7 @@ export function LoginScreen({ useSystemFont = false, onContinue }: Props) {
                       style={[styles.input, font()]}
                       value={email}
                       onChangeText={value => update('email', value)}
-                      placeholder="ban@email.com"
+                      placeholder="you@email.com"
                       placeholderTextColor={COLORS.placeholder}
                       selectionColor={COLORS.accent}
                       keyboardType="email-address"
@@ -117,18 +117,18 @@ export function LoginScreen({ useSystemFont = false, onContinue }: Props) {
                 </View>
 
                 <View style={styles.field}>
-                  <Text nativeID="password-label" style={[styles.label, font('semibold')]}>Mật khẩu</Text>
+                  <Text nativeID="password-label" style={[styles.label, font('semibold')]}>Password</Text>
                   <View style={[styles.inputShell, errors.password && styles.invalid, focused === 'password' && styles.focused]}>
                     <Feather name="lock" size={19} color={focused === 'password' ? COLORS.accent : COLORS.placeholder} />
                     <TextInput
                       ref={passwordRef}
-                      accessibilityLabel="Mật khẩu"
+                      accessibilityLabel="Password"
                       accessibilityLabelledBy="password-label"
                       accessibilityHint={errors.password}
                       style={[styles.input, font()]}
                       value={password}
                       onChangeText={value => update('password', value)}
-                      placeholder="Nhập mật khẩu của bạn"
+                      placeholder="Enter your password"
                       placeholderTextColor={COLORS.placeholder}
                       selectionColor={COLORS.accent}
                       secureTextEntry={!visible}
@@ -143,7 +143,7 @@ export function LoginScreen({ useSystemFont = false, onContinue }: Props) {
                     />
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={visible ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                      accessibilityLabel={visible ? 'Hide password' : 'Show password'}
                       accessibilityState={{ checked: visible }}
                       onPress={() => setVisible(previous => !previous)}
                       style={({ pressed }) => [styles.eye, pressed && styles.pressed]}
@@ -157,32 +157,32 @@ export function LoginScreen({ useSystemFont = false, onContinue }: Props) {
 
               <Pressable
                 accessibilityRole="button"
-                accessibilityLabel="Đăng nhập"
+                accessibilityLabel="Sign in"
                 onPress={submit}
                 onHoverIn={() => setSubmitHovered(true)}
                 onHoverOut={() => setSubmitHovered(false)}
                 style={({ pressed }) => [styles.submit, submitHovered && styles.submitHovered, pressed && styles.submitPressed]}
               >
-                <Text style={[styles.submitText, font('bold')]}>Đăng nhập</Text>
+                <Text style={[styles.submitText, font('bold')]}>Sign in</Text>
                 <Feather name="arrow-right" size={19} color={COLORS.card} />
               </Pressable>
 
               {ready && (
                 <View style={styles.notice}>
                   <Text accessibilityLiveRegion="polite" role="status" style={[styles.noticeText, font('medium')]}>
-                    Giao diện đăng nhập đã sẵn sàng
+                    The sign-in screen is ready
                   </Text>
                 </View>
               )}
 
-              {onContinue && <Text style={[styles.demoNote, font()]}>Bản trải nghiệm · Chưa xác thực tài khoản</Text>}
+              {onContinue && <Text style={[styles.demoNote, font()]}>Preview · No account verification</Text>}
 
               <View style={styles.cardFooter}>
                 <Feather name="sun" size={16} color={COLORS.accent} />
-                <Text style={[styles.footerText, font()]}>Từng việc nhỏ, một ngày nhẹ nhàng hơn.</Text>
+                <Text style={[styles.footerText, font()]}>Small steps make lighter days.</Text>
               </View>
             </View>
-            <Text style={[styles.outsideNote, font('medium')]}>Không cần làm tất cả. Chỉ cần bắt đầu.</Text>
+            <Text style={[styles.outsideNote, font('medium')]}>You don't have to do it all. Just begin.</Text>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   inputShell: { flexDirection: 'row', alignItems: 'center', paddingLeft: 16, paddingRight: 4, minHeight: 56, backgroundColor: COLORS.input, borderRadius: 16, borderWidth: 1.5, borderColor: COLORS.inputBorder, gap: 10 },
   focused: { borderColor: COLORS.accent, backgroundColor: COLORS.inputFocused },
   invalid: { borderColor: COLORS.error },
-  input: { flex: 1, minWidth: 0, color: COLORS.white, fontSize: 13, paddingVertical: 16, paddingHorizontal: 0, backgroundColor: COLORS.transparent, borderWidth: 0,
+  input: { flex: 1, minWidth: 0, color: COLORS.white, fontSize: 16, paddingVertical: 16, paddingHorizontal: 0, backgroundColor: COLORS.transparent, borderWidth: 0,
     // Keep the surrounding field as the single focus indicator on web.
     ...Platform.select({ web: { outlineStyle: 'solid' as const, outlineWidth: 0, outlineColor: COLORS.transparent } }) },
   eye: { width: 44, minHeight: 48, alignItems: 'center', justifyContent: 'center', borderRadius: 12 },

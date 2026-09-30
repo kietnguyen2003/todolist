@@ -10,14 +10,15 @@ function minutes(time: string | undefined): number | null {
 /** A projection of the shared task state; habits never enter this adapter. */
 export function tasksToCalendarEvents(tasks: readonly Task[]): CalendarEvent[] {
   return tasks.flatMap(task => {
-    const start = minutes(task.time);
+    const untimed=!task.time;
+    const start = untimed ? minutes(task.calendarStartTime) ?? 0 : minutes(task.time);
     if (start === null) return [];
     const explicitEnd = task.endTime === '24:00' ? 1440 : minutes(task.endTime);
-    const endEstimated = explicitEnd === null || explicitEnd <= start;
+    const endEstimated = !untimed && (explicitEnd === null || explicitEnd <= start);
     return [{
       id: task.id, title: task.title, date: task.date, start,
-      end: endEstimated ? Math.min(start + DEFAULT_DURATION_MINUTES, 1440) : explicitEnd,
-      endEstimated, done: task.done, tone: task.done ? 'cream' as const : 'navy' as const,
+      end: untimed ? 1440 : endEstimated ? Math.min(start + DEFAULT_DURATION_MINUTES, 1440) : explicitEnd!,
+      endEstimated, untimed, done: task.done, tone: task.done ? 'cream' as const : 'navy' as const,
     }];
   });
 }

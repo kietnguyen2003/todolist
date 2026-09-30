@@ -78,7 +78,7 @@ export function WheelPicker({ label, hint, options, selectedIndex, onChange, use
       accessible
       accessibilityRole="adjustable"
       accessibilityLabel={label}
-      accessibilityHint={hint ?? "Vuốt lên hoặc xuống để chọn."}
+      accessibilityHint={hint ?? "Swipe up or down to choose."}
       accessibilityValue={{ min: 0, max: Math.max(0, options.length - 1), now: currentIndex, text: options[currentIndex] ?? '' }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={({ nativeEvent }) => choose(currentIndex + (nativeEvent.actionName === 'increment' ? 1 : -1))}

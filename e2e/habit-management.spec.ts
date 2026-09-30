@@ -1,0 +1,34 @@
+import { expect, test } from '@playwright/test';
+
+test('a completed habit can be edited and deleted without losing other data or zooming the phone', async ({page}) => {
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/');
+  await expect(page.getByRole('button',{name:'Go to To do'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Go to Calendar'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Go to Tasks'})).toHaveCount(0);
+  await page.getByRole('button',{name:'Add habit'}).click();
+  const name=page.getByRole('textbox',{name:'Habit name'});
+  await expect(name).toBeVisible();
+  expect(await name.evaluate(input=>parseFloat(getComputedStyle(input).fontSize))).toBeGreaterThanOrEqual(16);
+  await name.fill('Read');
+  await page.getByRole('button',{name:'Create habit'}).click();
+  await page.getByRole('button',{name:'Increase Read'}).click();
+  await expect(page.getByText('✓ Complete',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Manage Read'}).click();
+  await page.getByRole('button',{name:'Edit habit'}).click();
+  await expect(page.getByRole('heading',{name:'Edit habit'})).toBeVisible();
+  await page.getByRole('textbox',{name:'Habit name'}).fill('Read books');
+  await page.getByRole('spinbutton',{name:'Daily target'}).press('ArrowUp');
+  await page.getByRole('button',{name:'Save habit'}).click();
+  await expect(page.getByText('Read books',{exact:true})).toBeVisible();
+  await expect(page.getByText('1 / 2 liter',{exact:true})).toBeVisible();
+  await page.reload();
+  await expect(page.getByText('Read books',{exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Manage Read books'}).click();
+  await page.getByRole('button',{name:'Delete habit'}).click();
+  await expect(page.getByText('Delete Read books?')).toBeVisible();
+  await page.getByRole('button',{name:'Delete permanently'}).click();
+  await expect(page.getByText('Read books',{exact:true})).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText('Read books',{exact:true})).toHaveCount(0);
+});

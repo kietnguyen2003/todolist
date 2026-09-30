@@ -24,11 +24,13 @@ test('task draft requires valid title date and increasing same-day hours',()=>{
   for(const end of ['10:00','11:00','99:00','12:99','']) assert.ok(validateTaskDraft('Tên','2026-09-29','11:00',end).endTime);
 });
 
-test('untimed tasks appear in todo but are omitted from the calendar',()=>{
+test('legacy tasks without a time remain in todo and display all day on the calendar',()=>{
   const state=createSampleData('2026-09-29');
   const task:Task={id:'untimed',title:'Mua bánh mì',date:'2026-09-29',done:false,icon:'check-square'};
   assert.deepEqual(validateTaskDraft(task.title,task.date),{});
   const next=todayReducer(state,{type:'addTask',task});
   assert.ok(next.tasks.some(item=>item.id==='untimed'));
-  assert.ok(!tasksToCalendarEvents(next.tasks).some(item=>item.id==='untimed'));
+  const event=tasksToCalendarEvents(next.tasks).find(item=>item.id==='untimed');
+  assert.equal(event?.start,0);
+  assert.equal(event?.end,1440);
 });

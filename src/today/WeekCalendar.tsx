@@ -110,11 +110,11 @@ export const WeekCalendar = memo(forwardRef<WeekCalendarHandle,Props>(function W
 
   return <View style={styles.calendar}>
     <View style={styles.header}>
-      <Copy weight="semibold">Tháng {localDate(selected).getMonth()+1}, {localDate(selected).getFullYear()}</Copy>
+      <Copy weight="semibold">{new Intl.DateTimeFormat('en',{month:'long',year:'numeric'}).format(localDate(selected))}</Copy>
       <View style={styles.actions}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Về hôm nay" onPress={()=>choose(dateKey(new Date()))} style={styles.todayButton}><Copy weight="semibold" style={styles.small}>Hôm nay</Copy></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Tuần trước" onPress={()=>moveWeek(-1)} style={styles.arrow}><Feather name="chevron-left" size={19} color={COLORS.card}/></Pressable>
-        <Pressable accessibilityRole="button" accessibilityLabel="Tuần sau" onPress={()=>moveWeek(1)} style={styles.arrow}><Feather name="chevron-right" size={19} color={COLORS.card}/></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Go to today" onPress={()=>choose(dateKey(new Date()))} style={styles.todayButton}><Copy weight="semibold" style={styles.small}>Today</Copy></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Previous week" onPress={()=>moveWeek(-1)} style={styles.arrow}><Feather name="chevron-left" size={19} color={COLORS.card}/></Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel="Next week" onPress={()=>moveWeek(1)} style={styles.arrow}><Feather name="chevron-right" size={19} color={COLORS.card}/></Pressable>
       </View>
     </View>
     <View testID="week-calendar-viewport" style={styles.viewport} onLayout={event=>{
@@ -125,8 +125,8 @@ export const WeekCalendar = memo(forwardRef<WeekCalendarHandle,Props>(function W
         {(width>0?[-1,0,1]:[0]).map(page=><View key={page} style={[styles.days,width>0 && {width}]} pointerEvents={page===0?'auto':'none'} accessibilityElementsHidden={page!==0} importantForAccessibility={page===0?'auto':'no-hide-descendants'} aria-hidden={page!==0}>
           {weekDates(addDays(selected,page*7)).map((date,index)=>{
             const chosen=date===(page===0?selected:preview);
-            return <Pressable key={date} accessible={page===0} disabled={page!==0} accessibilityRole="button" accessibilityLabel={page===0?`Chọn ngày ${date}`:undefined} {...(page===0 ? Platform.OS==='web'?{'aria-pressed':date===selected}:{accessibilityState:{selected:date===selected}} : {})} onPressIn={()=>{dragged.current=false;}} onPress={()=>{if(!dragged.current) choose(date);}} style={[styles.day,chosen && styles.selectedDay]}>
-              <Copy style={[styles.weekday,chosen && styles.selectedDayText]}>{['T2','T3','T4','T5','T6','T7','CN'][index]}</Copy>
+            return <Pressable key={date} accessible={page===0} disabled={page!==0} accessibilityRole="button" accessibilityLabel={page===0?`Select date ${date}`:undefined} {...(page===0 ? Platform.OS==='web'?{'aria-pressed':date===selected}:{accessibilityState:{selected:date===selected}} : {})} onPressIn={()=>{dragged.current=false;}} onPress={()=>{if(!dragged.current) choose(date);}} style={[styles.day,chosen && styles.selectedDay]}>
+              <Copy style={[styles.weekday,chosen && styles.selectedDayText]}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][index]}</Copy>
               <Copy weight="bold" style={[styles.dayNumber,chosen && styles.selectedDayText]}>{localDate(date).getDate()}</Copy>
               <View style={[styles.dayDot,{backgroundColor:date===today?COLORS.accent:COLORS.transparent}]}/>
             </Pressable>;

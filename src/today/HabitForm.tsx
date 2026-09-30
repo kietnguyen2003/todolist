@@ -6,13 +6,14 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { COLORS, FONTS } from '../theme';
-import { validateHabitDraft } from './model';
+import { validateHabitDraft, type Habit } from './model';
 import { WheelPicker } from './WheelPicker';
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onCreate: (draft: { name: string; target: number; unit: string }) => void;
+  habit?: Habit | null;
+  onSave: (draft: { name: string; target: number; unit: string }) => void;
   useSystemFont?: boolean;
 };
 type Field = 'name' | 'target' | 'unit';
@@ -21,10 +22,18 @@ const UNITS = ['liter', 'steps', 'hours and minute'] as const;
 const TARGETS = Array.from({ length: 101 }, (_, value) => String(value));
 const MINUTES = Array.from({ length: 60 }, (_, value) => String(value));
 const INITIAL_VALUES = { name: '', quantity: 1, hours: 0, minutes: 1, unit: 'liter' };
+function valuesFor(habit?:Habit|null) {
+  if(!habit)return INITIAL_VALUES;
+  return {name:habit.name,quantity:habit.target,hours:Math.floor(habit.target/60),minutes:habit.target%60,unit:habit.unit};
+}
 
-export function HabitForm({ visible, onClose, onCreate, useSystemFont = false }: Props) {
+export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = false }: Props) {
   const [values, setValues] = useState(INITIAL_VALUES);
+  const units=habit && !UNITS.some(unit=>unit===habit.unit)?[...UNITS,habit.unit]:UNITS;
   const isTime = values.unit === 'hours and minute';
+  // Keep older saved targets selectable while the picker for new values stays at 0–100.
+  const quantityOptions=values.quantity>100?[...TARGETS,String(values.quantity)]:TARGETS;
+  const hourOptions=values.hours>100?[...TARGETS,String(values.hours)]:TARGETS;
   const target = isTime ? values.hours * 60 + values.minutes : values.quantity;
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [focused, setFocused] = useState<Field | null>(null);
@@ -36,16 +45,16 @@ export function HabitForm({ visible, onClose, onCreate, useSystemFont = false }:
 
   useEffect(() => {
     if (visible) {
-      setValues(INITIAL_VALUES);
+      setValues(valuesFor(habit));
       setErrors({});
       setFocused(null);
     }
-  }, [visible]);
+  }, [visible,habit]);
 
   function submit() {
     const nextErrors = {
       ...validateHabitDraft(values.name, String(target), values.unit),
-      ...(target === 0 ? { target: isTime ? 'Hãy chọn thời lượng ít nhất 1 phút.' : 'Hãy chọn mục tiêu lớn hơn 0.' } : {}),
+      ...(target === 0 ? { target: isTime ? 'Choose at least one minute.' : 'Choose a target greater than zero.' } : {}),
     };
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length) {
@@ -53,7 +62,7 @@ export function HabitForm({ visible, onClose, onCreate, useSystemFont = false }:
       return;
     }
     Keyboard.dismiss();
-    onCreate({ name: values.name.trim(), target, unit: values.unit });
+    onSave({ name: values.name.trim(), target, unit: values.unit });
     onClose();
   }
 
@@ -80,23 +89,23 @@ export function HabitForm({ visible, onClose, onCreate, useSystemFont = false }:
             <View style={styles.card} accessibilityViewIsModal>
               <View style={styles.heading}>
                 <View style={styles.headingCopy}>
-                  <Text style={[styles.eyebrow, font('semibold')]}>TỪNG CHÚT, MỖI NGÀY</Text>
-                  <Text accessibilityRole="header" style={[styles.title, font('bold')]}>Thói quen mới</Text>
+                  <Text style={[styles.eyebrow, font('semibold')]}>A LITTLE EVERY DAY</Text>
+                  <Text accessibilityRole="header" style={[styles.title, font('bold')]}>{habit?'Edit habit':'New habit'}</Text>
                 </View>
-                <Pressable accessibilityRole="button" accessibilityLabel="Đóng tạo thói quen" onPress={close} style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Close habit form" onPress={close} style={({ pressed }) => [styles.close, pressed && styles.pressed]}>
                   <Feather name="x" size={22} color={COLORS.muted} />
                 </Pressable>
               </View>
-              <Text style={[styles.description, font()]}>Bắt đầu từ một việc nhỏ bạn muốn duy trì mỗi ngày.</Text>
+              <Text style={[styles.description, font()]}>Start with one small thing you want to do each day.</Text>
               <View style={styles.fields}>
                 <View style={styles.field}>
-                  <Text style={[styles.label, font('semibold')]}>Tên thói quen</Text>
+                  <Text style={[styles.label, font('semibold')]}>Habit name</Text>
                   <TextInput
                     ref={nameRef}
-                    accessibilityLabel="Tên thói quen"
+                    accessibilityLabel="Habit name"
                     accessibilityHint={errors.name}
                     value={values.name}
-                    placeholder="Ví dụ: Uống nước"
+                    placeholder="For example: Drink water"
                     placeholderTextColor={COLORS.placeholder}
                     selectionColor={COLORS.accent}
                     style={[styles.input, font(), focused === 'name' && styles.focused, !!errors.name && styles.invalid]}
@@ -114,48 +123,48 @@ export function HabitForm({ visible, onClose, onCreate, useSystemFont = false }:
                 </View>
                 <View style={styles.columns}>
                   <View style={styles.column}>
-                    <Text style={[styles.label, styles.columnLabel, font('semibold')]}>Mục tiêu mỗi ngày</Text>
+                    <Text style={[styles.label, styles.columnLabel, font('semibold')]}>Daily target</Text>
                     {isTime ? (
                       <View style={styles.timeColumns}>
                         <View style={styles.column}>
-                          <Text style={[styles.timeLabel, font()]}>Giờ</Text>
-                          <WheelPicker label="Mục tiêu giờ" hint={errors.target} options={TARGETS}
-                            selectedIndex={values.hours} useSystemFont={useSystemFont}
+                          <Text style={[styles.timeLabel, font()]}>Hours</Text>
+                          <WheelPicker label="Target hours" hint={errors.target} options={hourOptions}
+                            selectedIndex={hourOptions.indexOf(String(values.hours))} useSystemFont={useSystemFont}
                             onChange={index => updateTarget('hours', index)} />
                         </View>
                         <View style={styles.column}>
-                          <Text style={[styles.timeLabel, font()]}>Phút</Text>
-                          <WheelPicker label="Mục tiêu phút" hint={errors.target} options={MINUTES}
+                          <Text style={[styles.timeLabel, font()]}>Minutes</Text>
+                          <WheelPicker label="Target minutes" hint={errors.target} options={MINUTES}
                             selectedIndex={values.minutes} useSystemFont={useSystemFont}
                             onChange={index => updateTarget('minutes', index)} />
                         </View>
                       </View>
                     ) : (
-                      <WheelPicker label="Mục tiêu mỗi ngày" hint={errors.target} options={TARGETS}
-                        selectedIndex={values.quantity} useSystemFont={useSystemFont}
+                      <WheelPicker label="Daily target" hint={errors.target} options={quantityOptions}
+                        selectedIndex={quantityOptions.indexOf(String(values.quantity))} useSystemFont={useSystemFont}
                         onChange={index => updateTarget('quantity', index)} />
                     )}
                   </View>
                   <View style={styles.column}>
-                    <Text style={[styles.label, styles.columnLabel, font('semibold')]}>Đơn vị</Text>
+                    <Text style={[styles.label, styles.columnLabel, font('semibold')]}>Unit</Text>
                     {isTime && <View style={styles.timeLabelSpacer} />}
-                    <WheelPicker label="Đơn vị" options={UNITS}
-                      selectedIndex={UNITS.findIndex(unit => unit === values.unit)} useSystemFont={useSystemFont}
+                    <WheelPicker label="Unit" options={units}
+                      selectedIndex={units.findIndex(unit => unit === values.unit)} useSystemFont={useSystemFont}
                       onChange={index => {
-                        setValues(previous => ({ ...previous, unit: UNITS[index] }));
+                        setValues(previous => ({ ...previous, unit: units[index] }));
                         setErrors(previous => ({ ...previous, target: undefined }));
                       }} />
                   </View>
                 </View>
                 {!!errors.target && <Text role="alert" style={[styles.error, font()]}>{errors.target}</Text>}
               </View>
-              <Text style={[styles.hint, font()]}>Kéo lên hoặc xuống để chọn mục tiêu và đơn vị. Bạn có thể cập nhật tiến độ riêng cho từng ngày.</Text>
-              <Pressable accessibilityRole="button" accessibilityLabel="Tạo thói quen" onPress={submit} style={({ pressed }) => [styles.submit, pressed && styles.submitPressed]}>
+              <Text style={[styles.hint, font()]}>Scroll to choose a target and unit. Progress is tracked for each day.</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel={habit?'Save habit':'Create habit'} onPress={submit} style={({ pressed }) => [styles.submit, pressed && styles.submitPressed]}>
                 <Feather name="plus" size={18} color={COLORS.card} />
-                <Text style={[styles.submitText, font('bold')]}>Tạo thói quen</Text>
+                <Text style={[styles.submitText, font('bold')]}>{habit?'Save habit':'Create habit'}</Text>
               </Pressable>
               <Pressable accessibilityRole="button" onPress={close} style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}>
-                <Text style={[styles.cancelText, font('medium')]}>Để sau</Text>
+                <Text style={[styles.cancelText, font('medium')]}>Not now</Text>
               </Pressable>
             </View>
           </ScrollView>
@@ -187,7 +196,7 @@ const styles = StyleSheet.create({
   label: { color: COLORS.white, fontSize: 13 },
   input: {
     minHeight: 52, borderRadius: 16, borderWidth: 1.5, borderColor: COLORS.inputBorder,
-    backgroundColor: COLORS.input, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.white, fontSize: 14,
+    backgroundColor: COLORS.input, paddingHorizontal: 16, paddingVertical: 14, color: COLORS.white, fontSize: 16,
     ...Platform.select({ web: { outlineStyle: 'solid' as const, outlineWidth: 0, outlineColor: COLORS.transparent } }),
   },
   focused: { borderColor: COLORS.accent, backgroundColor: COLORS.inputFocused },

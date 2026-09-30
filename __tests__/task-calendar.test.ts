@@ -25,3 +25,15 @@ test('task calendar validates times, supports explicit ends and caps at midnight
   assert.deepEqual(tasksToCalendarEvents([{...task,time:'25:00'},{...task,time:'09:99'}]),[]);
   assert.equal(tasksToCalendarEvents([{...task,endTime:'08:00'}])[0].endEstimated,true);
 });
+
+test('tasks without a scheduled time appear from creation or tapped slot until midnight',()=>{
+  const task=createSampleData('2026-09-29').tasks[0];
+  const created=tasksToCalendarEvents([{...task,time:undefined,endTime:undefined,calendarStartTime:'14:37'}])[0];
+  assert.equal(created.start,14*60+37);
+  assert.equal(created.end,1440);
+  assert.equal(created.endEstimated,false);
+  assert.equal(created.untimed,true);
+  const legacy=tasksToCalendarEvents([{...task,time:undefined,endTime:undefined}])[0];
+  assert.equal(legacy.start,0);
+  assert.equal(legacy.end,1440);
+});

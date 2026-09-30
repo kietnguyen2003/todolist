@@ -27,7 +27,8 @@ function validState(value: unknown): value is TodayState {
   const taskIds = new Set<string>();
   for (const task of value.tasks) {
     if (!record(task) || !identifier(task.id) || taskIds.has(task.id) || !date(task.date)
-      || !text(task.title, 120) || (task.time !== undefined && !clock(task.time)) || typeof task.done !== 'boolean'
+      || !text(task.title, 120) || (task.time !== undefined && !clock(task.time))
+      || (task.calendarStartTime !== undefined && !clock(task.calendarStartTime)) || typeof task.done !== 'boolean'
       || !['book-open', 'shopping-bag', 'mail', 'check-square'].includes(String(task.icon))) return false;
     if (task.endTime !== undefined && (!task.time || !(clock(task.endTime) || task.endTime === '24:00') || task.endTime <= task.time)) return false;
     taskIds.add(task.id);
@@ -53,11 +54,11 @@ export function decodeTodayState(raw: string | null): TodayState {
   if (raw === null) return emptyTodayState();
   const envelope: unknown = JSON.parse(raw);
   if (!record(envelope) || envelope.version !== TODAY_STORAGE_VERSION || !validState(envelope.state)) {
-    throw new Error('Dữ liệu lưu trên máy không hợp lệ hoặc thuộc phiên bản chưa hỗ trợ.');
+    throw new Error('Saved data is invalid or uses an unsupported version.');
   }
   return envelope.state;
 }
 export function encodeTodayState(state: TodayState): string {
-  if (!validState(state)) throw new Error('Không thể lưu dữ liệu không hợp lệ.');
+  if (!validState(state)) throw new Error('Cannot save invalid data.');
   return JSON.stringify({ version: TODAY_STORAGE_VERSION, state });
 }

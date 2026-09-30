@@ -10,7 +10,7 @@ export function HabitProgress({name,count,target,unit,reducedMotion}:{name:strin
     animation.start();
     return ()=>animation.stop();
   },[count,target,reducedMotion,progress]);
-  return <View accessibilityRole="progressbar" accessibilityLabel={`Tiến độ ${name}`} aria-valuemin={0} aria-valuemax={target} aria-valuenow={Math.min(count,target)} aria-valuetext={formatHabitProgress(count,target,unit)} style={styles.track}>
+  return <View accessibilityRole="progressbar" accessibilityLabel={`Progress ${name}`} aria-valuemin={0} aria-valuemax={target} aria-valuenow={Math.min(count,target)} aria-valuetext={formatHabitProgress(count,target,unit)} style={styles.track}>
     <Animated.View style={[styles.fill,{width:progress.interpolate({inputRange:[0,1],outputRange:['0%','100%']})}]}/>
   </View>;
 }

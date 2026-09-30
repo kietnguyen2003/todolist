@@ -45,6 +45,24 @@ test('creates immutable daily habit and rejects duplicate or invalid drafts', ()
   assert.deepEqual(todayReducer(state,{type:'addHabit',habit:{...habit,target:0}}),state);
 });
 
+test('editing a habit keeps its identity, start date and existing daily progress', () => {
+  const withProgress=todayReducer(state,{type:'setCount',id:'h1',date:'2026-09-27',count:8});
+  const updated=todayReducer(withProgress,{type:'updateHabit',id:'h1',name:'Read',target:12,unit:'pages'});
+  assert.deepEqual(updated.habits[0],{...state.habits[0],name:'Read',target:12,unit:'pages'});
+  assert.equal(habitCount(updated,'h1','2026-09-27'),8);
+  assert.deepEqual(withProgress.habits,state.habits);
+  assert.equal(todayReducer(updated,{type:'updateHabit',id:'h1',name:' ',target:12,unit:'pages'}),updated);
+});
+
+test('deleting a habit removes its daily counts without touching other habits', () => {
+  const second={id:'h2',name:'Walk',target:5,unit:'steps',startDate:'2026-09-26',icon:'activity' as const};
+  const populated={...state,habits:[...state.habits,second],counts:{'2026-09-27':{h1:8,h2:4},'2026-09-28':{h1:7,h2:5}}};
+  const deleted=todayReducer(populated,{type:'deleteHabit',id:'h1'});
+  assert.deepEqual(deleted.habits,[second]);
+  assert.deepEqual(deleted.counts,{'2026-09-27':{h2:4},'2026-09-28':{h2:5}});
+  assert.deepEqual(populated.counts['2026-09-27'],{h1:8,h2:4});
+});
+
 test('daily tasks are sorted by start time without mutating saved order',()=>{
   const tasks=[
     {...state.tasks[0],id:'late',time:'18:00'},
