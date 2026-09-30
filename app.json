@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Từng bước",
+    "name": "Tea Pret",
     "slug": "tung-buoc",
     "version": "1.0.0",
     "icon": "./app-icon.png",
@@ -13,7 +13,7 @@
       "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
-      "name": "Từng bước",
+      "name": "Tea Pret",
       "bundler": "metro",
       "favicon": "./app-icon.png"
     },

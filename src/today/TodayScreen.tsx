@@ -92,11 +92,11 @@ export function TodayScreen({state,dispatch,onCreateTask,onCalendar,initialSecti
         <View onLayout={handleEntryLayout} style={[styles.content,desktop && styles.desktopContent]}>
           <View style={styles.heading}>
             <View style={styles.headingText}>
-              <Copy weight="semibold" style={styles.eyebrow}>TỪNG BƯỚC MỖI NGÀY</Copy>
+              <Copy weight="semibold" style={styles.eyebrow}>Tea Pret MỖI NGÀY</Copy>
               <Copy accessibilityRole="header" weight="bold" style={styles.title}>Một ngày có ý nghĩa.</Copy>
               <Copy style={styles.subtitle}>Dành thời gian cho những điều quan trọng.</Copy>
             </View>
-            <View testID="today-header-logo" style={[styles.headerLogo,desktop && styles.headerLogoDesktop]}><Image source={require('../../logo.png')} accessibilityLabel="Logo Từng bước" resizeMode="contain" style={styles.headerLogoImage}/></View>
+            <View testID="today-header-logo" style={[styles.headerLogo,desktop && styles.headerLogoDesktop]}><Image source={require('../../logo.png')} accessibilityLabel="Logo Tea Pret" resizeMode="contain" style={styles.headerLogoImage}/></View>
           </View>
 
           <View style={styles.summary}>

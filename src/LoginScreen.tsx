@@ -67,10 +67,10 @@ export function LoginScreen({ useSystemFont = false, onContinue }: Props) {
             <View style={[styles.card, compact && styles.compactCard]}>
               <View style={styles.brand}>
                 <View style={styles.logo} accessible={false}>
-                  <Image source={require('../logo.png')} style={styles.logoImage} resizeMode="contain" accessibilityLabel="Logo Từng bước" />
+                  <Image source={require('../logo.png')} style={styles.logoImage} resizeMode="contain" accessibilityLabel="Logo Tea Pret" />
                 </View>
                 <View style={styles.brandCopy}>
-                  <Text style={[styles.brandName, font('bold')]}>từng bước</Text>
+                  <Text style={[styles.brandName, font('bold')]}>Tea Pret</Text>
                   <Text style={[styles.brandCaption, font('medium')]}>VIỆC NHỎ. NGÀY Ý NGHĨA.</Text>
                 </View>
               </View>

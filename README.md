@@ -1,4 +1,4 @@
-# Từng bước
+# Tea Pret
 
 Ứng dụng React Native + Expo cho todo và thói quen hằng ngày, dùng chung Plus Jakarta Sans, Feather và theme kem/navy/hồng.
 
