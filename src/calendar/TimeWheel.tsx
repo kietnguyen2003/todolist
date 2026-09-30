@@ -21,16 +21,16 @@ export function TimeWheel({value,end=false,error,onChange}:Props) {
     <View style={styles.columns}>
       <View style={styles.column}>
         <Copy style={styles.caption}>Hour</Copy>
-        <WheelPicker label={`${end?'End':'Start'} hour`} hint={error} options={end?END_HOURS:HOURS} selectedIndex={hour} onChange={index=>change(index,minute)} useSystemFont={system}/>
+        <WheelPicker compact label={`${end?'End':'Start'} hour`} hint={error} options={end?END_HOURS:HOURS} selectedIndex={hour} onChange={index=>change(index,minute)} useSystemFont={system}/>
       </View>
       <View style={styles.column}>
         <Copy style={styles.caption}>Minute</Copy>
-        <WheelPicker label={`${end?'End':'Start'} minute`} hint={hour===24?'End of day at 24:00.':error} options={hour===24?MIDNIGHT_MINUTES:MINUTES} selectedIndex={hour===24?0:minute} onChange={index=>change(hour,index)} useSystemFont={system}/>
+        <WheelPicker compact label={`${end?'End':'Start'} minute`} hint={hour===24?'End of day at 24:00.':error} options={hour===24?MIDNIGHT_MINUTES:MINUTES} selectedIndex={hour===24?0:minute} onChange={index=>change(hour,index)} useSystemFont={system}/>
       </View>
     </View>
   </View>;
 }
 const styles=StyleSheet.create({
-  group:{flex:1,minWidth:0,gap:8},label:{color:COLORS.white,fontSize:13},
-  columns:{flexDirection:'row',gap:6},column:{flex:1,minWidth:0,gap:6},caption:{color:COLORS.muted,fontSize:11,textAlign:'center'},
+  group:{flex:1,minWidth:0,gap:5},label:{color:COLORS.white,fontSize:13},
+  columns:{flexDirection:'row',gap:5},column:{flex:1,minWidth:0,gap:4},caption:{color:COLORS.muted,fontSize:11,textAlign:'center'},
 });

@@ -9,15 +9,17 @@ type Props = {
   selectedIndex: number;
   onChange: (index: number) => void;
   useSystemFont?: boolean;
+  compact?: boolean;
   testID?: string;
 };
 
 const ROW_HEIGHT = 44;
 const VISIBLE_ROWS = 3;
-const EDGE_PADDING = ROW_HEIGHT * ((VISIBLE_ROWS - 1) / 2);
 
 /** A controlled wheel: scrolling emits selection without restarting its momentum. */
-export function WheelPicker({ label, hint, options, selectedIndex, onChange, useSystemFont = false, testID }: Props) {
+export function WheelPicker({ label, hint, options, selectedIndex, onChange, useSystemFont = false, compact = false, testID }: Props) {
+  const rowHeight=compact?40:ROW_HEIGHT;
+  const edgePadding=rowHeight*((VISIBLE_ROWS-1)/2);
   const scrollRef = useRef<ScrollView>(null);
   const scrollIndex = useRef(selectedIndex);
   const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -30,13 +32,13 @@ export function WheelPicker({ label, hint, options, selectedIndex, onChange, use
     // User scroll already moved to this value; leave the native gesture alone.
     if (scrollIndex.current !== currentIndex) {
       scrollIndex.current = currentIndex;
-      scrollRef.current?.scrollTo({ y: currentIndex * ROW_HEIGHT, animated: false });
+      scrollRef.current?.scrollTo({ y: currentIndex * rowHeight, animated: false });
     }
-  }, [currentIndex]);
+  }, [currentIndex,rowHeight]);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ y: scrollIndex.current * ROW_HEIGHT, animated: false });
-  }, [optionsKey]);
+    scrollRef.current?.scrollTo({ y: scrollIndex.current * rowHeight, animated: false });
+  }, [optionsKey,rowHeight]);
 
   useEffect(() => () => {
     if (settleTimer.current) clearTimeout(settleTimer.current);
@@ -46,7 +48,7 @@ export function WheelPicker({ label, hint, options, selectedIndex, onChange, use
     const nextIndex = bound(index);
     if (settleTimer.current) clearTimeout(settleTimer.current);
     scrollIndex.current = nextIndex;
-    scrollRef.current?.scrollTo({ y: nextIndex * ROW_HEIGHT, animated: false });
+    scrollRef.current?.scrollTo({ y: nextIndex * rowHeight, animated: false });
     if (nextIndex !== currentIndex) onChange(nextIndex);
   }
 
@@ -82,26 +84,26 @@ export function WheelPicker({ label, hint, options, selectedIndex, onChange, use
       accessibilityValue={{ min: 0, max: Math.max(0, options.length - 1), now: currentIndex, text: options[currentIndex] ?? '' }}
       accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
       onAccessibilityAction={({ nativeEvent }) => choose(currentIndex + (nativeEvent.actionName === 'increment' ? 1 : -1))}
-      style={[styles.wheel, focused && styles.focused]}
+      style={[styles.wheel,{height:rowHeight*VISIBLE_ROWS+2},focused && styles.focused]}
     >
-      <View pointerEvents="none" style={styles.selection} />
+      <View pointerEvents="none" style={[styles.selection,{top:edgePadding,height:rowHeight}]} />
       <ScrollView
         ref={scrollRef}
         nestedScrollEnabled
         showsVerticalScrollIndicator={false}
-        snapToInterval={ROW_HEIGHT}
+        snapToInterval={rowHeight}
         decelerationRate="fast"
         bounces={false}
         overScrollMode="never"
         scrollEventThrottle={16}
         keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content,{paddingVertical:edgePadding}]}
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
         {...(Platform.OS === 'web' ? { tabIndex: -1, 'aria-hidden': true } : {})}
-        onLayout={() => scrollRef.current?.scrollTo({ y: scrollIndex.current * ROW_HEIGHT, animated: false })}
+        onLayout={() => scrollRef.current?.scrollTo({ y: scrollIndex.current * rowHeight, animated: false })}
         onScroll={({ nativeEvent }) => {
-          const nextIndex = bound(Math.round(nativeEvent.contentOffset.y / ROW_HEIGHT));
+          const nextIndex = bound(Math.round(nativeEvent.contentOffset.y / rowHeight));
           if (nextIndex !== scrollIndex.current) {
             scrollIndex.current = nextIndex;
             onChange(nextIndex);
@@ -110,7 +112,7 @@ export function WheelPicker({ label, hint, options, selectedIndex, onChange, use
           if (Platform.OS === 'web') {
             if (settleTimer.current) clearTimeout(settleTimer.current);
             settleTimer.current = setTimeout(() => {
-              scrollRef.current?.scrollTo({ y: scrollIndex.current * ROW_HEIGHT, animated: false });
+              scrollRef.current?.scrollTo({ y: scrollIndex.current * rowHeight, animated: false });
             }, 120);
           }
         }}
@@ -122,7 +124,7 @@ export function WheelPicker({ label, hint, options, selectedIndex, onChange, use
             focusable={false}
             {...(Platform.OS === 'web' ? { tabIndex: -1 } : {})}
             onPress={() => choose(index)}
-            style={styles.row}
+            style={[styles.row,{height:rowHeight}]}
           >
             <Text style={[
               styles.text,
@@ -138,17 +140,17 @@ export function WheelPicker({ label, hint, options, selectedIndex, onChange, use
 
 const styles = StyleSheet.create({
   wheel: {
-    height: ROW_HEIGHT * VISIBLE_ROWS + 2, borderRadius: 16, overflow: 'hidden',
+    borderRadius: 16, overflow: 'hidden',
     backgroundColor: COLORS.input, borderWidth: 1, borderColor: COLORS.inputBorder,
     ...Platform.select({ web: { outlineStyle: 'solid' as const, outlineWidth: 0 } }),
   },
   focused: { borderColor: COLORS.accent },
   selection: {
-    position: 'absolute', top: EDGE_PADDING, left: 6, right: 6,
-    height: ROW_HEIGHT, borderRadius: 10, backgroundColor: COLORS.accent,
+    position: 'absolute', left: 6, right: 6,
+    borderRadius: 10, backgroundColor: COLORS.accent,
   },
-  content: { paddingVertical: EDGE_PADDING },
-  row: { height: ROW_HEIGHT, alignItems: 'center', justifyContent: 'center' },
+  content: {},
+  row: { alignItems: 'center', justifyContent: 'center' },
   text: { color: COLORS.muted, fontSize: 16, lineHeight: 20, textAlign: 'center', paddingHorizontal: 4, flexShrink: 1 },
   selectedText: { color: COLORS.card, fontWeight: '700' },
 });

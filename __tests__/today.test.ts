@@ -72,3 +72,23 @@ test('daily tasks are sorted by start time without mutating saved order',()=>{
   assert.deepEqual(tasksForDate({...state,tasks},'2026-09-27').map(task=>task.id),['early','middle','late']);
   assert.deepEqual(tasks.map(task=>task.id),['late','early','middle']);
 });
+
+test('weekly and monthly tasks appear only on matching dates and completion is per occurrence',()=>{
+  const recurring={...state.tasks[0],date:'2026-01-31',recurrence:'monthly' as const,done:false};
+  const weekly={...state.tasks[0],id:'weekly',date:'2026-09-28',recurrence:'weekly' as const,done:false};
+  const seeded={...state,tasks:[recurring,weekly]};
+  assert.deepEqual(tasksForDate(seeded,'2026-02-28'),[]);
+  assert.deepEqual(tasksForDate(seeded,'2026-03-31').map(task=>task.id),['t1']);
+  assert.deepEqual(tasksForDate(seeded,'2026-10-05').map(task=>task.id),['weekly']);
+  const completed=todayReducer(seeded,{type:'toggleTask',id:'weekly',date:'2026-10-05'});
+  assert.equal(tasksForDate(completed,'2026-10-05')[0].done,true);
+  assert.equal(tasksForDate(completed,'2026-09-28')[0].done,false);
+  assert.deepEqual(completed.tasks[1].completedDates,['2026-10-05']);
+  assert.equal(todayReducer(completed,{type:'toggleTask',id:'weekly',date:'2026-10-05'}).tasks[1].completedDates?.length,0);
+});
+test('changing a task color updates the saved task without changing completion',()=>{
+  const updated=todayReducer(state,{type:'setTaskColor',id:'t1',color:'sage'});
+  assert.equal(updated.tasks[0].color,'sage');
+  assert.equal(updated.tasks[0].done,false);
+  assert.equal(state.tasks[0].color,undefined);
+});

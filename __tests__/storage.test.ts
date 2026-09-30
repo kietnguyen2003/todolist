@@ -42,3 +42,12 @@ test('untimed task survives storage roundtrip',()=>{
   state.tasks=[{id:'untimed',title:'Chỉ to-do',date:'2026-09-29',done:false,icon:'check-square'}];
   assert.deepEqual(decodeTodayState(encodeTodayState(state)),state);
 });
+
+test('repeating colored tasks survive storage and reject invalid occurrence data',()=>{
+  const base={id:'repeat',title:'Review',date:'2026-09-29',time:'09:00',endTime:'10:00',done:false,icon:'check-square' as const,recurrence:'weekly' as const,color:'sage' as const,completedDates:['2026-10-06']};
+  const state={...emptyTodayState(),tasks:[base]};
+  assert.deepEqual(decodeTodayState(encodeTodayState(state)),state);
+  for(const task of [{...base,color:'blue'},{...base,recurrence:'daily'},{...base,completedDates:['2026-10-07']},{...base,completedDates:['2026-10-06','2026-10-06']}]) {
+    assert.throws(()=>encodeTodayState({...state,tasks:[task as typeof base]}));
+  }
+});

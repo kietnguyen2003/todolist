@@ -25,7 +25,7 @@ test('habit target and unit use side-by-side wheels, not free-text inputs',async
   await target.press('ArrowUp');
   await target.press('ArrowUp');
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
-  await expect(page.getByText('0 / 2 liter',{exact:true})).toBeVisible();
+  await expect(page.getByText('0 / 2 liters',{exact:true})).toBeVisible();
 });
 
 test('mouse wheel updates the selected quantity and reopening resets the draft', async ({page}) => {
@@ -46,7 +46,8 @@ test('combined hours and minute unit reveals two wheels and stores duration corr
   await openForm(page);
   await page.getByRole('textbox',{name:'Habit name',exact:true}).fill('Học tập');
   const unit = page.getByRole('spinbutton',{name:'Unit',exact:true});
-  await unit.press('End');
+  await unit.press('ArrowUp');
+  await unit.press('ArrowUp');
   await expect(unit).toHaveAttribute('aria-valuetext','hours and minute');
   const hours = page.getByRole('spinbutton',{name:'Target hours',exact:true});
   const minutes = page.getByRole('spinbutton',{name:'Target minutes',exact:true});
@@ -64,7 +65,8 @@ test('combined hours and minute unit reveals two wheels and stores duration corr
   await page.screenshot({path:'/private/tmp/habit-duration-320.png'});
   await unit.press('Home');
   await expect(hours).toHaveCount(0);
-  await unit.press('End');
+  await unit.press('ArrowUp');
+  await unit.press('ArrowUp');
   await expect(hours).toHaveAttribute('aria-valuetext','1');
   await expect(minutes).toHaveAttribute('aria-valuetext','30');
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
@@ -79,7 +81,8 @@ test('combined hours and minute unit reveals two wheels and stores duration corr
 test('duration minutes stop at 59 and zero duration cannot be created', async ({page}) => {
   await openForm(page);
   await page.getByRole('textbox',{name:'Habit name',exact:true}).fill('Thiền');
-  await page.getByRole('spinbutton',{name:'Unit',exact:true}).press('End');
+  await page.getByRole('spinbutton',{name:'Unit',exact:true}).press('ArrowUp');
+  await page.getByRole('spinbutton',{name:'Unit',exact:true}).press('ArrowUp');
   const hours=page.getByRole('spinbutton',{name:'Target hours',exact:true});
   const minutes=page.getByRole('spinbutton',{name:'Target minutes',exact:true});
   await minutes.press('End');

@@ -1,12 +1,18 @@
 // Duration targets and daily progress share the same base unit: whole minutes.
 export const DURATION_UNIT = 'hours and minute';
+export function displayUnit(unit:string,target:number):string {
+  if(unit==='steps')return target===1?'step':'steps';
+  if(unit==='liter')return target===1?'liter':'liters';
+  if(unit==='time')return target===1?'Time':'Times';
+  return unit;
+}
 export function formatHabitQuantity(value: number, unit: string): string {
   return unit === DURATION_UNIT
     ? `${Math.floor(value / 60)} hr ${value % 60} min`
-    : `${value} ${unit}`;
+    : `${value} ${displayUnit(unit,value).toLowerCase()}`;
 }
 export function formatHabitProgress(count: number, target: number, unit: string): string {
   return unit === DURATION_UNIT
     ? `${formatHabitQuantity(count, unit)} / ${formatHabitQuantity(target, unit)}`
-    : `${count} / ${target} ${unit}`;
+    : `${count} / ${target} ${displayUnit(unit,target).toLowerCase()}`;
 }

@@ -37,3 +37,12 @@ test('tasks without a scheduled time appear from creation or tapped slot until m
   assert.equal(legacy.start,0);
   assert.equal(legacy.end,1440);
 });
+
+test('calendar projects recurring occurrences with their selected color and day-specific completion',()=>{
+  const task={...createSampleData('2026-09-29').tasks[0],recurrence:'weekly' as const,color:'rose' as const,completedDates:['2026-10-06']};
+  const events=tasksToCalendarEvents([task],['2026-09-29','2026-10-06','2026-10-13']);
+  assert.deepEqual(events.map(event=>event.date),['2026-09-29','2026-10-06','2026-10-13']);
+  assert.deepEqual(events.map(event=>event.done),[false,true,false]);
+  assert.ok(events.every(event=>event.color==='rose'));
+  assert.equal(new Set(events.map(event=>event.id)).size,3);
+});

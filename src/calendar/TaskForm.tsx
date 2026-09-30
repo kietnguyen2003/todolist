@@ -3,12 +3,13 @@ import { Animated, Easing, Keyboard, KeyboardAvoidingView, Modal, Platform, Pres
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Feather from '@expo/vector-icons/Feather';
 import { TimeWheel } from './TimeWheel';
-import { COLORS, FONTS } from '../theme';
+import { COLORS, FONTS, TASK_COLORS, type TaskColor } from '../theme';
 import { validateTaskDraft } from '../today/model';
 import { Copy, SystemFontContext } from '../today/ui';
 import { useReducedMotion } from '../today/useReducedMotion';
+import { usePopupEntrance } from '../today/usePopupEntrance';
 
-type Draft={title:string;date:string;time?:string;endTime?:string;calendarStartTime?:string};
+type Draft={title:string;date:string;time?:string;endTime?:string;calendarStartTime?:string;recurrence?:'weekly'|'monthly';color?:TaskColor};
 type Props={slot:{date:string;time?:string;calendarStartTime?:string}|null;onClose:()=>void;onCreate:(draft:Draft)=>void};
 function clock(minutes:number) {return `${String(Math.floor(minutes/60)).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;}
 function addMinutes(time:string,amount:number) {
@@ -19,7 +20,8 @@ function addMinutes(time:string,amount:number) {
 export function TaskForm({slot,onClose,onCreate}:Props) {
   const systemFont=useContext(SystemFontContext);
   const reducedMotion=useReducedMotion();
-  const [values,setValues]=useState({title:'',date:'',time:'09:00',endTime:'09:30',timed:false});
+  const entrance=usePopupEntrance(slot!==null,reducedMotion);
+  const [values,setValues]=useState({title:'',date:'',time:'09:00',endTime:'09:30',timed:false,recurrence:'none' as 'none'|'weekly'|'monthly',color:'navy' as TaskColor});
   const [errors,setErrors]=useState<ReturnType<typeof validateTaskDraft>>({});
   const [focused,setFocused]=useState<'title'|'date'|null>(null);
   const reveal=useRef(new Animated.Value(0)).current;
@@ -27,7 +29,7 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
   useEffect(()=>{
     if(!slot) return;
     const time=slot.time??'09:00';
-    setValues({title:'',date:slot.date,time,endTime:addMinutes(time,30),timed:Boolean(slot.time)});
+    setValues({title:'',date:slot.date,time,endTime:addMinutes(time,30),timed:Boolean(slot.time),recurrence:'none',color:'navy'});
     setErrors({});submitted.current=false;reveal.setValue(slot.time?1:0);
   },[slot,reveal]);
   useEffect(()=>{
@@ -48,15 +50,15 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
     submitted.current=true;
     const now=new Date();
     const calendarStartTime=values.timed?undefined:(slot.calendarStartTime??slot.time??clock(now.getHours()*60+now.getMinutes()));
-    onCreate({title:values.title.trim(),date:values.date,time,endTime,calendarStartTime});
+    onCreate({title:values.title.trim(),date:values.date,time,endTime,calendarStartTime,recurrence:values.recurrence==='none'?undefined:values.recurrence,color:values.color});
     close();
   }
-  return <Modal visible={slot!==null} transparent animationType={reducedMotion?'none':'fade'} onRequestClose={close}>
-    <View style={styles.backdrop}/>
+  return <Modal visible={slot!==null} transparent animationType="none" onRequestClose={close}>
+    <Animated.View pointerEvents="none" style={[styles.backdrop,entrance.scrimStyle]}/>
     <SafeAreaView style={styles.flex}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS==='ios'?'padding':'height'}>
         <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
-          <View style={styles.card} accessibilityViewIsModal>
+          <Animated.View testID="task-popup-card" style={[styles.card,entrance.cardStyle]} accessibilityViewIsModal>
             <View style={styles.heading}>
               <Copy accessibilityRole="header" weight="bold" style={styles.title}>Add task</Copy>
               <Pressable accessibilityRole="button" accessibilityLabel="Close task form" onPress={close} style={styles.close}><Feather name="x" size={20} color={COLORS.muted}/></Pressable>
@@ -85,18 +87,31 @@ export function TaskForm({slot,onClose,onCreate}:Props) {
                 {[30,60,90].map(minutes=><Pressable key={minutes} accessibilityRole="button" accessibilityLabel={`Duration ${minutes} minutes`} onPress={()=>update('endTime',addMinutes(values.time,minutes))} style={({pressed})=>[styles.shortcut,pressed&&styles.pressed]}><Copy style={styles.shortcutText}>+{minutes<60?`${minutes}m`:minutes===60?'1h':'1h30'}</Copy></Pressable>)}
               </View>
             </Animated.View>}
+            <View style={styles.field}>
+              <Copy weight="semibold" style={styles.label}>Repeat</Copy>
+              <View accessibilityRole="radiogroup" style={styles.choiceRow}>
+                {(['none','weekly','monthly'] as const).map(option=><Pressable key={option} accessibilityRole="radio" aria-checked={values.recurrence===option} onPress={()=>setValues(previous=>({...previous,recurrence:option}))} style={[styles.choice,values.recurrence===option&&styles.choiceSelected]}><Copy weight="semibold" style={[styles.choiceText,values.recurrence===option&&styles.choiceTextSelected]}>{option==='none'?'Never':option==='weekly'?'Weekly':'Monthly'}</Copy></Pressable>)}
+              </View>
+            </View>
+            <View style={styles.field}>
+              <Copy weight="semibold" style={styles.label}>Color</Copy>
+              <View style={styles.colors}>
+                {(Object.keys(TASK_COLORS) as TaskColor[]).map(color=><Pressable key={color} accessibilityRole="button" accessibilityLabel={`Select ${color} color`} aria-pressed={values.color===color} onPress={()=>setValues(previous=>({...previous,color}))} style={[styles.colorChoice,{backgroundColor:TASK_COLORS[color].background,borderColor:values.color===color?COLORS.white:TASK_COLORS[color].border}]}>{values.color===color&&<Feather name="check" size={18} color={TASK_COLORS[color].text}/>}</Pressable>)}
+              </View>
+            </View>
             <Pressable accessibilityRole="button" accessibilityLabel="Create task" onPress={submit} style={({pressed})=>[styles.submit,pressed&&styles.submitPressed]}><Feather name="plus" size={18} color={COLORS.card}/><Copy weight="bold">Create task</Copy></Pressable>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   </Modal>;
 }
 const styles=StyleSheet.create({
-  flex:{flex:1},backdrop:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:COLORS.overlay},page:{flexGrow:1,alignItems:'center',justifyContent:'center',paddingHorizontal:16,paddingVertical:16},card:{width:'100%',maxWidth:430,borderRadius:22,backgroundColor:COLORS.card,padding:20,gap:14},
-  heading:{flexDirection:'row',alignItems:'center',gap:8},title:{flex:1,color:COLORS.white,fontSize:21},close:{width:44,height:44,alignItems:'center',justifyContent:'center',borderRadius:14,backgroundColor:COLORS.input},
-  field:{gap:6},label:{color:COLORS.white,fontSize:12},input:{height:48,borderRadius:14,borderWidth:1,borderColor:COLORS.inputBorder,backgroundColor:COLORS.input,paddingHorizontal:14,color:COLORS.white,fontSize:16},nameInput:{height:52,borderRadius:14,borderWidth:1,borderColor:COLORS.inputBorder,backgroundColor:COLORS.input,paddingHorizontal:14,color:COLORS.white,fontSize:16},focused:{borderColor:COLORS.accent},invalid:{borderColor:COLORS.error},error:{color:COLORS.error,fontSize:12},
-  modeRow:{flexDirection:'row',gap:4,padding:4,backgroundColor:COLORS.input,borderRadius:14},mode:{flex:1,minHeight:44,borderRadius:11,alignItems:'center',justifyContent:'center'},modeSelected:{backgroundColor:COLORS.accent},modeText:{fontSize:12,color:COLORS.muted},modeTextSelected:{color:COLORS.card},
-  timeRow:{flexDirection:'row',gap:10,marginTop:2},shortcuts:{flexDirection:'row',gap:8,marginTop:12},shortcut:{minHeight:40,minWidth:64,paddingHorizontal:12,alignItems:'center',justifyContent:'center',borderRadius:12,backgroundColor:COLORS.input},shortcutText:{fontSize:12,color:COLORS.muted},pressed:{opacity:0.65},
-  submit:{minHeight:50,marginTop:4,borderRadius:999,backgroundColor:COLORS.accent,alignItems:'center',justifyContent:'center',flexDirection:'row',gap:8},submitPressed:{backgroundColor:COLORS.accentPressed},
+  flex:{flex:1},backdrop:{position:'absolute',top:0,right:0,bottom:0,left:0,backgroundColor:COLORS.overlay},page:{flexGrow:1,alignItems:'center',justifyContent:'center',paddingHorizontal:12,paddingVertical:8},card:{width:'100%',maxWidth:400,borderRadius:20,backgroundColor:COLORS.card,padding:16,gap:10},
+  heading:{flexDirection:'row',alignItems:'center',gap:8},title:{flex:1,color:COLORS.white,fontSize:20},close:{width:44,height:44,alignItems:'center',justifyContent:'center',borderRadius:13,backgroundColor:COLORS.input},
+  field:{gap:4},label:{color:COLORS.white,fontSize:12},input:{height:44,borderRadius:12,borderWidth:1,borderColor:COLORS.inputBorder,backgroundColor:COLORS.input,paddingHorizontal:12,color:COLORS.white,fontSize:16},nameInput:{height:48,borderRadius:12,borderWidth:1,borderColor:COLORS.inputBorder,backgroundColor:COLORS.input,paddingHorizontal:12,color:COLORS.white,fontSize:16},focused:{borderColor:COLORS.accent},invalid:{borderColor:COLORS.error},error:{color:COLORS.error,fontSize:12},
+  modeRow:{flexDirection:'row',gap:4,padding:3,backgroundColor:COLORS.input,borderRadius:13},mode:{flex:1,minHeight:44,borderRadius:10,alignItems:'center',justifyContent:'center'},modeSelected:{backgroundColor:COLORS.accent},modeText:{fontSize:12,color:COLORS.muted},modeTextSelected:{color:COLORS.card},
+  choiceRow:{flexDirection:'row',gap:6},choice:{flex:1,minHeight:44,borderRadius:12,backgroundColor:COLORS.input,alignItems:'center',justifyContent:'center',paddingHorizontal:4},choiceSelected:{backgroundColor:COLORS.accent},choiceText:{fontSize:12,color:COLORS.muted},choiceTextSelected:{color:COLORS.card},colors:{flexDirection:'row',gap:10},colorChoice:{width:48,height:44,borderRadius:13,borderWidth:2,alignItems:'center',justifyContent:'center'},
+  timeRow:{flexDirection:'row',gap:8,marginTop:2},shortcuts:{flexDirection:'row',gap:8,marginTop:8},shortcut:{minHeight:40,minWidth:64,paddingHorizontal:12,alignItems:'center',justifyContent:'center',borderRadius:11,backgroundColor:COLORS.input},shortcutText:{fontSize:12,color:COLORS.muted},pressed:{opacity:0.65},
+  submit:{minHeight:48,marginTop:2,borderRadius:999,backgroundColor:COLORS.accent,alignItems:'center',justifyContent:'center',flexDirection:'row',gap:8},submitPressed:{backgroundColor:COLORS.accentPressed},
 });

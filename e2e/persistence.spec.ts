@@ -25,7 +25,7 @@ test('fresh install is empty and task, habit, progress survive reloading',async(
   await page.getByRole('spinbutton',{name:'Daily target',exact:true}).press('ArrowUp');
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
   await page.getByRole('button',{name:'Increase Uống đủ nước',exact:true}).click();
-  await expect(page.getByText('1 / 2 liter',{exact:true})).toBeVisible();
+  await expect(page.getByText('1 / 2 liters',{exact:true})).toBeVisible();
   await expect.poll(async()=>page.evaluate(()=>{
     const saved=JSON.parse(localStorage.getItem('tung-buoc:today:v1')??'null');
     return saved?.state.counts['2026-09-29']?.[saved.state.habits[0]?.id];
@@ -33,7 +33,7 @@ test('fresh install is empty and task, habit, progress survive reloading',async(
   await page.reload();
   await waitForToday(page);
   await expect(page.getByRole('checkbox',{name:'Công việc của tôi',exact:true})).toBeChecked();
-  await expect(page.getByText('1 / 2 liter',{exact:true})).toBeVisible();
+  await expect(page.getByText('1 / 2 liters',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Go to Calendar',exact:true}).click();
   await expect(page.locator('[data-testid^="calendar-event-"]')).toHaveCount(1);
   await expect(page.getByRole('button',{name:/^Công việc của tôi,.*complete$/})).toBeVisible();

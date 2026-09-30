@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView,
+  Animated, Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView,
   StyleSheet, Text, TextInput, View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,6 +8,9 @@ import Feather from '@expo/vector-icons/Feather';
 import { COLORS, FONTS } from '../theme';
 import { validateHabitDraft, type Habit } from './model';
 import { WheelPicker } from './WheelPicker';
+import { displayUnit } from './quantity';
+import { useReducedMotion } from './useReducedMotion';
+import { usePopupEntrance } from './usePopupEntrance';
 
 type Props = {
   visible: boolean;
@@ -18,7 +21,7 @@ type Props = {
 };
 type Field = 'name' | 'target' | 'unit';
 
-const UNITS = ['liter', 'steps', 'hours and minute'] as const;
+const UNITS = ['liter', 'steps', 'hours and minute', 'time'] as const;
 const TARGETS = Array.from({ length: 101 }, (_, value) => String(value));
 const MINUTES = Array.from({ length: 60 }, (_, value) => String(value));
 const INITIAL_VALUES = { name: '', quantity: 1, hours: 0, minutes: 1, unit: 'liter' };
@@ -28,6 +31,8 @@ function valuesFor(habit?:Habit|null) {
 }
 
 export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = false }: Props) {
+  const reducedMotion=useReducedMotion();
+  const entrance=usePopupEntrance(visible,reducedMotion);
   const [values, setValues] = useState(INITIAL_VALUES);
   const units=habit && !UNITS.some(unit=>unit===habit.unit)?[...UNITS,habit.unit]:UNITS;
   const isTime = values.unit === 'hours and minute';
@@ -35,6 +40,7 @@ export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = fal
   const quantityOptions=values.quantity>100?[...TARGETS,String(values.quantity)]:TARGETS;
   const hourOptions=values.hours>100?[...TARGETS,String(values.hours)]:TARGETS;
   const target = isTime ? values.hours * 60 + values.minutes : values.quantity;
+  const unitLabels=units.map(unit=>displayUnit(unit,target));
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
   const [focused, setFocused] = useState<Field | null>(null);
   const nameRef = useRef<TextInput>(null);
@@ -77,8 +83,8 @@ export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = fal
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={close}>
-      <View style={styles.backdrop} />
+    <Modal visible={visible} transparent animationType="none" onRequestClose={close}>
+      <Animated.View pointerEvents="none" style={[styles.backdrop,entrance.scrimStyle]} />
       <SafeAreaView style={styles.flex}>
         <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <ScrollView
@@ -86,7 +92,7 @@ export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = fal
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
           >
-            <View style={styles.card} accessibilityViewIsModal>
+            <Animated.View testID="habit-popup-card" style={[styles.card,entrance.cardStyle]} accessibilityViewIsModal>
               <View style={styles.heading}>
                 <View style={styles.headingCopy}>
                   <Text style={[styles.eyebrow, font('semibold')]}>A LITTLE EVERY DAY</Text>
@@ -130,7 +136,7 @@ export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = fal
                           <Text style={[styles.timeLabel, font()]}>Hours</Text>
                           <WheelPicker label="Target hours" hint={errors.target} options={hourOptions}
                             selectedIndex={hourOptions.indexOf(String(values.hours))} useSystemFont={useSystemFont}
-                            onChange={index => updateTarget('hours', index)} />
+                            onChange={index => updateTarget('hours', Number(hourOptions[index]))} />
                         </View>
                         <View style={styles.column}>
                           <Text style={[styles.timeLabel, font()]}>Minutes</Text>
@@ -142,13 +148,13 @@ export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = fal
                     ) : (
                       <WheelPicker label="Daily target" hint={errors.target} options={quantityOptions}
                         selectedIndex={quantityOptions.indexOf(String(values.quantity))} useSystemFont={useSystemFont}
-                        onChange={index => updateTarget('quantity', index)} />
+                        onChange={index => updateTarget('quantity', Number(quantityOptions[index]))} />
                     )}
                   </View>
                   <View style={styles.column}>
                     <Text style={[styles.label, styles.columnLabel, font('semibold')]}>Unit</Text>
                     {isTime && <View style={styles.timeLabelSpacer} />}
-                    <WheelPicker label="Unit" options={units}
+                    <WheelPicker label="Unit" options={unitLabels}
                       selectedIndex={units.findIndex(unit => unit === values.unit)} useSystemFont={useSystemFont}
                       onChange={index => {
                         setValues(previous => ({ ...previous, unit: units[index] }));
@@ -166,7 +172,7 @@ export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = fal
               <Pressable accessibilityRole="button" onPress={close} style={({ pressed }) => [styles.cancel, pressed && styles.pressed]}>
                 <Text style={[styles.cancelText, font('medium')]}>Not now</Text>
               </Pressable>
-            </View>
+            </Animated.View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -176,7 +182,7 @@ export function HabitForm({ visible, onClose, habit, onSave, useSystemFont = fal
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: COLORS.shadow, opacity: 0.6 },
+  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, backgroundColor: COLORS.overlay },
   page: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16, paddingVertical: 24 },
   card: { width: '100%', maxWidth: 440, borderRadius: 24, backgroundColor: COLORS.card, padding: 24 },
   heading: { flexDirection: 'row', alignItems: 'center', gap: 8 },

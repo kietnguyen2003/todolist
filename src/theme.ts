@@ -24,6 +24,14 @@ export const COLORS = {
   overlay: 'rgba(17, 28, 43, 0.48)',
 } as const;
 
+export const TASK_COLORS = {
+  navy: { background: COLORS.card, border: COLORS.card, text: COLORS.white, muted: COLORS.muted },
+  rose: { background: '#E9BDCD', border: '#D9A3B8', text: COLORS.card, muted: COLORS.paperText },
+  sage: { background: '#B9D7C9', border: '#93BDAA', text: COLORS.card, muted: COLORS.paperText },
+  sand: { background: '#EAD3A4', border: '#D6B977', text: COLORS.card, muted: COLORS.paperText },
+} as const;
+export type TaskColor = keyof typeof TASK_COLORS;
+
 export const FONTS = {
   regular: 'PlusJakartaSans_400Regular',
   medium: 'PlusJakartaSans_500Medium',

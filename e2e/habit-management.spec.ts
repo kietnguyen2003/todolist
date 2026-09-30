@@ -21,7 +21,7 @@ test('a completed habit can be edited and deleted without losing other data or z
   await page.getByRole('spinbutton',{name:'Daily target'}).press('ArrowUp');
   await page.getByRole('button',{name:'Save habit'}).click();
   await expect(page.getByText('Read books',{exact:true})).toBeVisible();
-  await expect(page.getByText('1 / 2 liter',{exact:true})).toBeVisible();
+  await expect(page.getByText('1 / 2 liters',{exact:true})).toBeVisible();
   await page.reload();
   await expect(page.getByText('Read books',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Manage Read books'}).click();

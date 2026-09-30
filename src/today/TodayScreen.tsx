@@ -13,9 +13,10 @@ import { Copy, SystemFontContext } from './ui';
 import { WeekCalendar, type WeekCalendarHandle } from './WeekCalendar';
 import { Collapsible } from './Collapsible';
 import { useReducedMotion } from './useReducedMotion';
+import { usePopupEntrance } from './usePopupEntrance';
 import { TaskItem } from './TaskItem';
 
-type Props={onCreateTask:(draft:Pick<Task,'title'|'date'|'time'|'endTime'|'calendarStartTime'>)=>void;onCalendar:()=>void;state:TodayState;dispatch:Dispatch<TodayAction>;useSystemFont?:boolean};
+type Props={onCreateTask:(draft:Pick<Task,'title'|'date'|'time'|'endTime'|'calendarStartTime'|'recurrence'|'color'>)=>void;onCalendar:()=>void;state:TodayState;dispatch:Dispatch<TodayAction>;useSystemFont?:boolean};
 export function TodayScreen({state,dispatch,onCreateTask,onCalendar,useSystemFont=false}:Props) {
   const {width}=useWindowDimensions();
   const desktop=Platform.OS==='web' && width>=900;
@@ -30,6 +31,7 @@ export function TodayScreen({state,dispatch,onCreateTask,onCalendar,useSystemFon
   const habitsRotation=useRef(new Animated.Value(0)).current;
   const calendar=useRef<WeekCalendarHandle>(null);
   const reducedMotion=useReducedMotion();
+  const deleteEntrance=usePopupEntrance(deletingHabit!==null,reducedMotion);
   const scroll=useRef<ScrollView>(null);
   const nextHabitId=useRef(0);
   const tasks=tasksForDate(state,selected);
@@ -98,12 +100,12 @@ export function TodayScreen({state,dispatch,onCreateTask,onCalendar,useSystemFon
       {!desktop && <SafeAreaView edges={['bottom']} style={styles.bottomBar}>{navigation}</SafeAreaView>}
       <TaskForm slot={taskSlot} onClose={()=>setTaskSlot(null)} onCreate={draft=>{onCreateTask(draft);setSelected(draft.date);}}/>
       <HabitForm visible={formOpen||editingHabit!==null} habit={editingHabit} onClose={()=>{setFormOpen(false);setEditingHabit(null);}} useSystemFont={useSystemFont} onSave={draft=>editingHabit?dispatch({type:'updateHabit',id:editingHabit.id,...draft}):dispatch({type:'addHabit',habit:{...draft,id:`habit-${Date.now()}-${nextHabitId.current++}`,startDate:selected,icon:'activity'}})}/>
-      <Modal visible={deletingHabit!==null} transparent animationType={reducedMotion?'none':'fade'} onRequestClose={()=>setDeletingHabit(null)}>
-        <SafeAreaView style={styles.deleteBackdrop}><View style={styles.deleteCard} accessibilityViewIsModal>
+      <Modal visible={deletingHabit!==null} transparent animationType="none" onRequestClose={()=>setDeletingHabit(null)}>
+        <SafeAreaView style={styles.deleteBackdrop}><Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill,styles.deleteScrim,deleteEntrance.scrimStyle]}/><Animated.View testID="delete-popup-card" style={[styles.deleteCard,deleteEntrance.cardStyle]} accessibilityViewIsModal>
           <Copy accessibilityRole="header" weight="bold" style={styles.deleteTitle}>Delete {deletingHabit?.name}?</Copy>
           <Copy style={styles.deleteDescription}>This removes the habit and all its saved daily progress.</Copy>
           <View style={styles.deleteActions}><Pressable accessibilityRole="button" onPress={()=>setDeletingHabit(null)} style={styles.deleteCancel}><Copy weight="semibold">Cancel</Copy></Pressable><Pressable accessibilityRole="button" onPress={()=>{if(deletingHabit)dispatch({type:'deleteHabit',id:deletingHabit.id});setDeletingHabit(null);}} style={styles.deleteConfirm}><Copy weight="bold" style={styles.deleteConfirmText}>Delete permanently</Copy></Pressable></View>
-        </View></SafeAreaView>
+        </Animated.View></SafeAreaView>
       </Modal>
     </SafeAreaView>
   </SystemFontContext.Provider>;
@@ -116,5 +118,5 @@ const styles=StyleSheet.create({
   columns:{gap:24},desktopColumns:{flexDirection:'row',alignItems:'flex-start',gap:28},column:{minWidth:0},desktopColumn:{flex:1},sectionHeading:{flexDirection:'row',alignItems:'center',gap:9,marginBottom:12,minHeight:30},sectionTitle:{fontSize:16,flex:1},counter:{color:COLORS.paperText,fontSize:12},collapseButton:{width:44,height:44,alignItems:'center',justifyContent:'center',borderRadius:10,backgroundColor:COLORS.white},list:{gap:8},
   pressed:{opacity:0.75},note:{fontSize:11,color:COLORS.paperText,lineHeight:18,marginTop:12},
   empty:{padding:20,gap:12,alignItems:'center',backgroundColor:COLORS.white,borderRadius:18},emptyText:{fontSize:12,color:COLORS.paperText,textAlign:'center',lineHeight:20},newHabit:{minHeight:54,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:8,borderWidth:1,borderColor:COLORS.accent,borderStyle:'dashed',borderRadius:16,backgroundColor:COLORS.roseSoft},bottomNote:{textAlign:'center',fontSize:11,color:COLORS.paperText,marginTop:24},bottomBar:{backgroundColor:COLORS.card},
-  deleteBackdrop:{flex:1,justifyContent:'center',alignItems:'center',padding:20,backgroundColor:COLORS.overlay},deleteCard:{width:'100%',maxWidth:420,backgroundColor:COLORS.background,borderRadius:20,padding:22,gap:14},deleteTitle:{fontSize:20},deleteDescription:{fontSize:13,color:COLORS.paperText,lineHeight:20},deleteActions:{flexDirection:'row',gap:8,marginTop:6},deleteCancel:{flex:1,minHeight:44,alignItems:'center',justifyContent:'center',backgroundColor:COLORS.white,borderRadius:12},deleteConfirm:{flex:1.5,minHeight:44,alignItems:'center',justifyContent:'center',backgroundColor:COLORS.card,borderRadius:12},deleteConfirmText:{color:COLORS.white},
+  deleteBackdrop:{flex:1,justifyContent:'center',alignItems:'center',padding:20},deleteScrim:{backgroundColor:COLORS.overlay},deleteCard:{width:'100%',maxWidth:420,backgroundColor:COLORS.background,borderRadius:20,padding:22,gap:14},deleteTitle:{fontSize:20},deleteDescription:{fontSize:13,color:COLORS.paperText,lineHeight:20},deleteActions:{flexDirection:'row',gap:8,marginTop:6},deleteCancel:{flex:1,minHeight:44,alignItems:'center',justifyContent:'center',backgroundColor:COLORS.white,borderRadius:12},deleteConfirm:{flex:1.5,minHeight:44,alignItems:'center',justifyContent:'center',backgroundColor:COLORS.card,borderRadius:12},deleteConfirmText:{color:COLORS.white},
 });

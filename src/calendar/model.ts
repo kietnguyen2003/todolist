@@ -1,7 +1,9 @@
 import { dateKey, localDate } from '../today/model.ts';
+import type { TaskColor } from '../theme.ts';
 
 export type CalendarEvent = {
   id: string;
+  taskId?: string;
   title: string;
   date: string;
   /** Minutes since local midnight; end may be 1440 (24:00). */
@@ -10,6 +12,8 @@ export type CalendarEvent = {
   done?: boolean;
   endEstimated?: boolean;
   untimed?: boolean;
+  recurrence?: 'weekly' | 'monthly';
+  color?: TaskColor;
   tone: 'rose' | 'navy' | 'cream';
 };
 export type PositionedEvent = {

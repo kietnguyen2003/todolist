@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
-import { COLORS } from '../theme';
+import { COLORS, TASK_COLORS } from '../theme';
 import type { Task } from './model';
 import { Copy } from './ui';
 
@@ -13,10 +13,10 @@ export function TaskItem({task,onToggle,reducedMotion}:{task:Task;onToggle:()=>v
     return ()=>animation.stop();
   },[task.done,reducedMotion,completion]);
   return <Pressable accessibilityRole="checkbox" accessibilityLabel={task.title} aria-checked={task.done} onPress={onToggle} style={({pressed})=>[styles.task,pressed && styles.pressed]}>
-    <View style={[styles.icon,task.done && styles.doneIcon]}><Feather name={task.icon} size={20} color={task.done?COLORS.paperText:COLORS.card}/></View>
+    <View style={[styles.icon,task.color&&{backgroundColor:TASK_COLORS[task.color].background},task.done && styles.doneIcon]}><Feather name={task.icon} size={20} color={task.done?COLORS.paperText:task.color?TASK_COLORS[task.color].text:COLORS.card}/></View>
     <Animated.View style={[styles.body,{opacity:completion.interpolate({inputRange:[0,1],outputRange:[1,0.7]})}]}>
       <Copy weight="medium" style={[styles.title,task.done && styles.doneTitle]}>{task.title}</Copy>
-      {task.time&&<Copy style={styles.time}>{task.time}</Copy>}
+      {(task.time||task.recurrence)&&<Copy style={styles.time}>{[task.time,task.recurrence==='weekly'?'Weekly':task.recurrence==='monthly'?'Monthly':undefined].filter(Boolean).join(' · ')}</Copy>}
     </Animated.View>
     <View style={[styles.checkbox,task.done && styles.checked]}><Animated.View style={{opacity:completion}}><Feather name="check" size={17} color={COLORS.card}/></Animated.View></View>
   </Pressable>;
