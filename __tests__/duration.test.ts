@@ -9,12 +9,12 @@ test('duration quantities display hours and minutes from stored minutes', () => 
   assert.equal(formatHabitQuantity(8, 'liter'), '8 liters');
 });
 
-test('count units agree with the selected target and support Time',()=>{
+test('count units agree with the selected target and support time',()=>{
   assert.equal(displayUnit('steps',1),'step');
   assert.equal(displayUnit('steps',2),'steps');
   assert.equal(displayUnit('liter',2),'liters');
-  assert.equal(displayUnit('time',1),'Time');
-  assert.equal(displayUnit('time',2),'Times');
+  assert.equal(displayUnit('time',1),'time');
+  assert.equal(displayUnit('time',2),'times');
   assert.equal(formatHabitProgress(0,1,'steps'),'0 / 1 step');
   assert.equal(formatHabitProgress(1,2,'time'),'1 / 2 times');
 });

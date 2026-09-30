@@ -49,7 +49,7 @@ test('a monthly task recurs on the same calendar day',async({page})=>{
   await expect(event).toHaveCSS('background-color','rgb(185, 215, 201)');
 });
 
-test('habit unit labels follow the target and Time is available',async({page})=>{
+test('habit unit labels follow the target and time is available',async({page})=>{
   await page.goto('/');
   await page.getByRole('button',{name:'Add habit'}).click();
   const target=page.getByRole('spinbutton',{name:'Daily target'});
@@ -59,9 +59,9 @@ test('habit unit labels follow the target and Time is available',async({page})=>
   await target.press('ArrowUp');
   await expect(unit).toHaveAttribute('aria-valuetext','steps');
   await unit.press('End');
-  await expect(unit).toHaveAttribute('aria-valuetext','Times');
+  await expect(unit).toHaveAttribute('aria-valuetext','times');
   await target.press('ArrowDown');
-  await expect(unit).toHaveAttribute('aria-valuetext','Time');
+  await expect(unit).toHaveAttribute('aria-valuetext','time');
   await page.getByRole('textbox',{name:'Habit name'}).fill('Stretch');
   await page.getByRole('button',{name:'Create habit'}).click();
   await expect(page.getByText('0 / 1 time',{exact:true})).toBeVisible();
