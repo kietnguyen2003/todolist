@@ -10,8 +10,10 @@ import { COLORS } from './src/theme';
 import { CalendarScreen } from './src/calendar/CalendarScreen';
 import type { Section } from './src/today/TodayNavigation';
 import { TodayScreen } from './src/today/TodayScreen';
+import { TrackerScreen } from './src/tracker/TrackerScreen';
+import { createTrackerDemo } from './src/tracker/sampleData';
 import { usePersistentTodayState } from './src/storage/usePersistentTodayState';
-import type { Task } from './src/today/model';
+import { dateKey, type Task } from './src/today/model';
 
 export default function App() {
   const [screen, setScreen] = useState<Section>('todo');
@@ -25,7 +27,7 @@ export default function App() {
   }
   useEffect(() => {
     const listener = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (screen === 'calendar') { navigate('todo'); return true; }
+      if (screen !== 'todo') { navigate('todo'); return true; }
       return false;
     });
     return () => listener.remove();
@@ -51,8 +53,10 @@ export default function App() {
       ) : (
         screen === 'calendar' ? (
           <CalendarScreen onCreateTask={addTask} onChangeTaskColor={(id,color)=>dispatch({type:'setTaskColor',id,color})} onDeleteTask={id=>dispatch({type:'deleteTask',id})} tasks={todayState.tasks} useSystemFont={Boolean(fontError)} onSelect={navigate} />
+        ) : screen === 'tracker' ? (
+          <TrackerScreen state={todayState} onSelect={navigate} useSystemFont={Boolean(fontError)} onLoadDemo={()=>dispatch({type:'seedTrackerDemo',...createTrackerDemo(dateKey(new Date()))})}/>
         ) : (
-          <TodayScreen onCreateTask={addTask} onCalendar={() => navigate('calendar')} useSystemFont={Boolean(fontError)} state={todayState} dispatch={dispatch} />
+          <TodayScreen onCreateTask={addTask} onCalendar={() => navigate('calendar')} onTracker={() => navigate('tracker')} useSystemFont={Boolean(fontError)} state={todayState} dispatch={dispatch} />
         )
       )}
     </SafeAreaProvider>

@@ -2,9 +2,9 @@ import { Image, Pressable, StyleSheet, View } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { COLORS } from '../theme';
 import { Copy } from './ui';
-export type Section='todo'|'calendar';
+export type Section='todo'|'calendar'|'tracker';
 export function TodayNavigation({desktop,active,onSelect}:{desktop:boolean;active:Section;onSelect:(section:Section)=>void}) {
-  const items=[{id:'todo' as const,label:'To do',icon:'check-square' as const},{id:'calendar' as const,label:'Calendar',icon:'calendar' as const}];
+  const items=[{id:'todo' as const,label:'To do',icon:'check-square' as const},{id:'calendar' as const,label:'Calendar',icon:'calendar' as const},{id:'tracker' as const,label:'Tracker',icon:'bar-chart-2' as const}];
   return <View testID={desktop?'navigation-top':'navigation-bottom'} style={[styles.bar,desktop && styles.top]}>
     {desktop && <View style={styles.brand}><View style={styles.logo}><Image source={require('../../logo.png')} style={styles.logoImage} resizeMode="contain" accessibilityLabel="Logo Tea Pret"/></View><Copy weight="bold" style={styles.brandText}>Tea Pret</Copy></View>}
     <View style={styles.items}>

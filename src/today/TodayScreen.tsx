@@ -16,8 +16,8 @@ import { useReducedMotion } from './useReducedMotion';
 import { usePopupEntrance } from './usePopupEntrance';
 import { TaskItem } from './TaskItem';
 
-type Props={onCreateTask:(draft:Pick<Task,'title'|'date'|'time'|'endTime'|'calendarStartTime'|'recurrence'|'color'>)=>void;onCalendar:()=>void;state:TodayState;dispatch:Dispatch<TodayAction>;useSystemFont?:boolean};
-export function TodayScreen({state,dispatch,onCreateTask,onCalendar,useSystemFont=false}:Props) {
+type Props={onCreateTask:(draft:Pick<Task,'title'|'date'|'time'|'endTime'|'calendarStartTime'|'recurrence'|'color'>)=>void;onCalendar:()=>void;onTracker:()=>void;state:TodayState;dispatch:Dispatch<TodayAction>;useSystemFont?:boolean};
+export function TodayScreen({state,dispatch,onCreateTask,onCalendar,onTracker,useSystemFont=false}:Props) {
   const {width}=useWindowDimensions();
   const desktop=Platform.OS==='web' && width>=900;
   const {selected,setSelected}=useCalendarDay();
@@ -53,6 +53,7 @@ export function TodayScreen({state,dispatch,onCreateTask,onCalendar,useSystemFon
   }
   function navigate(section:Section) {
     if(section==='calendar') { onCalendar(); return; }
+    if(section==='tracker') { onTracker(); return; }
     calendar.current?.goToToday();
     scroll.current?.scrollTo({y:0,animated:!reducedMotion});
   }

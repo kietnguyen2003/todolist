@@ -94,7 +94,7 @@ for(const width of [320,390,768,1280]) test(`To do navigation at ${width}`,async
   const box=await nav.boundingBox();
   if(width>=900) expect(box!.y).toBeLessThan(50);
   else expect(box!.y+box!.height).toBe(844);
-  await expect(nav.getByRole('button')).toHaveCount(2);
+  await expect(nav.getByRole('button')).toHaveCount(3);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Go to Calendar'}).click();
   await expect(page.getByRole('heading',{name:'Calendar',exact:true})).toBeVisible();

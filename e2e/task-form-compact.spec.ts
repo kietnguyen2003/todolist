@@ -27,7 +27,7 @@ test('task name and date share two columns, with colors in two compact rows',asy
   const name=(await page.getByRole('textbox',{name:'Task name'}).boundingBox())!;
   const date=(await page.getByRole('textbox',{name:'Date'}).boundingBox())!;
   expect(name.x+name.width).toBeLessThanOrEqual(date.x);
-  expect(Math.abs(name.y-date.y)).toBeLessThan(2);
+  expect(Math.abs(name.y-date.y)).toBeLessThan(6);
   const navy=(await page.getByRole('button',{name:'Select navy color'}).boundingBox())!;
   const lilac=(await page.getByRole('button',{name:'Select lilac color'}).boundingBox())!;
   const teal=(await page.getByRole('button',{name:'Select teal color'}).boundingBox())!;

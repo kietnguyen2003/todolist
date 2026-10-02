@@ -3,7 +3,7 @@ import { isTaskColor, type TaskColor } from '../theme.ts';
 export type Habit = { id:string; name:string; target:number; unit:string; startDate:string; icon:'droplet'|'book-open'|'activity' };
 export type Task = { id:string; date:string; title:string; time?:string; endTime?:string; calendarStartTime?:string; recurrence?:'weekly'|'monthly'; completedDates?:string[]; color?:TaskColor; done:boolean; icon:'book-open'|'shopping-bag'|'mail'|'check-square' };
 export type TodayState = {tasks:Task[]; habits:Habit[]; counts:Record<string,Record<string,number>>};
-export type TodayAction = {type:'addTask';task:Task}|{type:'toggleTask';id:string;date:string}|{type:'setTaskColor';id:string;color:NonNullable<Task['color']>}|{type:'deleteTask';id:string}|{type:'setCount';id:string;date:string;count:number}|{type:'addHabit';habit:Habit}|{type:'updateHabit';id:string;name:string;target:number;unit:string}|{type:'deleteHabit';id:string};
+export type TodayAction = {type:'addTask';task:Task}|{type:'toggleTask';id:string;date:string}|{type:'setTaskColor';id:string;color:NonNullable<Task['color']>}|{type:'deleteTask';id:string}|{type:'setCount';id:string;date:string;count:number}|{type:'addHabit';habit:Habit}|{type:'updateHabit';id:string;name:string;target:number;unit:string}|{type:'deleteHabit';id:string}|{type:'seedTrackerDemo';habits:Habit[];counts:TodayState['counts']};
 
 export function dateKey(date:Date):string {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -93,6 +93,14 @@ export function todayReducer(state:TodayState,action:TodayAction):TodayState {
       if(!state.habits.some(habit=>habit.id===action.id)) return state;
       const counts=Object.fromEntries(Object.entries(state.counts).map(([date,values])=>[date,Object.fromEntries(Object.entries(values).filter(([id])=>id!==action.id))]).filter(([,values])=>Object.keys(values).length));
       return {...state,habits:state.habits.filter(habit=>habit.id!==action.id),counts};
+    }
+    case 'seedTrackerDemo': {
+      if(state.habits.length || Object.keys(state.counts).length) return state;
+      return {
+        ...state,
+        habits:action.habits.map(habit=>({...habit})),
+        counts:Object.fromEntries(Object.entries(action.counts).map(([date,values])=>[date,{...values}])),
+      };
     }
   }
 }
