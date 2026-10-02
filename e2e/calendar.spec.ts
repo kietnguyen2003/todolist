@@ -1,4 +1,61 @@
 import {test,expect,type Page} from './fixtures';
+test('phone calendar fits all seven days horizontally and slot taps keep the correct time', async ({page})=>{
+  await page.clock.install({time:new Date('2026-10-02T10:00:00+07:00')});
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/');
+  await page.getByRole('button',{name:'Go to Calendar'}).click();
+  const slot=page.getByTestId('calendar-slot-2026-10-02-12');
+  const initial=(await slot.boundingBox())!.width;
+  await page.getByRole('button',{name:'Zoom out'}).click();
+  await expect.poll(async()=>(await slot.boundingBox())!.width).toBeLessThan(initial);
+  await page.getByRole('button',{name:'Fit week'}).click();
+  const calendar=(await page.getByTestId('calendar-viewport').boundingBox())!;
+  const days=page.locator('[data-testid^="calendar-day-"]');
+  await expect(days).toHaveCount(7);
+  for(const day of await days.all()) {
+    const box=(await day.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(calendar.x-1);
+    expect(box.x+box.width).toBeLessThanOrEqual(calendar.x+calendar.width+1);
+  }
+  const fitted=(await slot.boundingBox())!.width;
+  await page.getByRole('button',{name:'Zoom in'}).click();
+  await expect.poll(async()=>(await slot.boundingBox())!.width).toBeGreaterThan(fitted);
+  await page.getByRole('button',{name:'Fit week'}).click();
+  await slot.click();
+  await expect(page.getByRole('spinbutton',{name:'Start hour'})).toHaveAttribute('aria-valuetext','12');
+});
+test('Fit week also displays all seven days on a narrow phone',async({page})=>{
+  await page.setViewportSize({width:320,height:700});
+  await page.goto('/');
+  await page.getByRole('button',{name:'Go to Calendar'}).click();
+  await page.getByRole('button',{name:'Fit week'}).click();
+  const viewport=(await page.getByTestId('calendar-viewport').boundingBox())!;
+  const last=(await page.locator('[data-testid^="calendar-day-"]').last().boundingBox())!;
+  expect(last.x+last.width).toBeLessThanOrEqual(viewport.x+viewport.width+1);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+});
+test('pinching the phone calendar changes day widths without changing hour heights',async({page})=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/');
+  await page.getByRole('button',{name:'Go to Calendar'}).click();
+  const slot=page.locator('[data-testid^="calendar-slot-"]').first();
+  const initialWidth=(await slot.boundingBox())!.width;
+  const initialHeight=(await slot.boundingBox())!.height;
+  const box=(await page.getByTestId('calendar-timeline').boundingBox())!;
+  const x=box.x+box.width/2,y=box.y+box.height/2;
+  const session=await page.context().newCDPSession(page);
+  await session.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:2});
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:x-25,y,id:1},{x:x+25,y,id:2}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-60,y,id:1},{x:x+60,y,id:2}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await expect.poll(async()=>(await slot.boundingBox())!.width).toBeGreaterThan(initialWidth);
+  const expanded=(await slot.boundingBox())!.width;
+  await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:x-60,y,id:3},{x:x+60,y,id:4}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-25,y,id:3},{x:x+25,y,id:4}]});
+  await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+  await expect.poll(async()=>(await slot.boundingBox())!.width).toBeLessThan(expanded);
+  expect((await slot.boundingBox())!.height).toBeCloseTo(initialHeight,0);
+});
 async function enterCalendar(page:Page,width=390) {
   await page.clock.install({time:new Date('2026-09-29T10:00:00+07:00')});
   await page.setViewportSize({width,height:844});
