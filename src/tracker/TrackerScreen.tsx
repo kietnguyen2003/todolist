@@ -113,7 +113,7 @@ export function TrackerScreen({ state, onSelect, onLoadDemo, useSystemFont = fal
           </View> : <View style={styles.emptyCard}>
             <Feather name="sun" size={26} color={COLORS.streakActive}/>
             <Copy weight="bold" style={styles.emptyTitle}>No habits to track yet</Copy>
-            <Copy style={styles.emptyDescription}>Add a habit in To do, or load sample data to preview your progress.</Copy>
+            <Copy style={styles.emptyDescription}>Add a habit in Habits, or load sample data to preview your progress.</Copy>
             <Pressable accessibilityRole="button" accessibilityLabel="Load sample data" onPress={onLoadDemo} style={styles.demoButton}><Copy weight="bold">Load sample data</Copy></Pressable>
           </View>}
         </View>

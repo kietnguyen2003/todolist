@@ -3,6 +3,7 @@ import {test,expect,type Page} from './fixtures';
 async function openForm(page:Page) {
   await page.setViewportSize({width:320,height:844});
   await page.goto('/');
+  await page.getByRole('button',{name:'Go to Habits'}).click();
   await page.getByRole('button',{name:'Add habit'}).click();
 }
 
@@ -25,6 +26,7 @@ test('habit target and unit use side-by-side wheels, not free-text inputs',async
   await target.press('ArrowUp');
   await target.press('ArrowUp');
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
+  await page.getByRole('button',{name:'Go to To do'}).click();
   await expect(page.getByText('0 / 2 liters',{exact:true})).toBeVisible();
 });
 
@@ -73,6 +75,7 @@ test('combined hours and minute unit reveals two wheels and stores duration corr
   await expect(minutes).toHaveAttribute('aria-valuetext','30');
   await expect(unit).toHaveAttribute('aria-valuetext','hour and minutes');
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
+  await page.getByRole('button',{name:'Go to To do'}).click();
   await expect(page.getByText('0 hr 0 min / 1 hr 30 min',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Update Học tập',exact:true}).click();
   await page.getByRole('textbox',{name:'Amount Học tập'}).fill('90');

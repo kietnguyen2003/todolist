@@ -72,6 +72,7 @@ test('existing habits are shown on desktop without inserting demo data', async (
   await page.clock.install({ time: new Date('2026-10-02T10:00:00+07:00') });
   await page.setViewportSize({ width: 1280, height: 850 });
   await page.goto('/');
+  await page.getByRole('button', { name: 'Go to Habits' }).click();
   await page.getByRole('button', { name: 'Add habit' }).click();
   await page.getByRole('textbox', { name: 'Habit name' }).fill('Read');
   await page.getByRole('button', { name: 'Create habit' }).click();

@@ -33,6 +33,7 @@ test('task toggles, date switching and quantities remain independent',async({pag
 });
 test('habit form validates, creates a generic unit habit and preserves it across page navigation',async({page})=>{
   await enter(page);
+  await page.getByRole('button',{name:'Go to Habits'}).click();
   await page.getByRole('button',{name:'Add habit'}).click();
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
   await expect(page.getByText('Enter a habit name with 1 to 60 characters.')).toBeVisible();
@@ -42,6 +43,7 @@ test('habit form validates, creates a generic unit habit and preserves it across
   await target.press('Home');
   for (let i = 0; i < 15; i++) await target.press('ArrowUp');
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
+  await page.getByRole('button',{name:'Go to To do'}).click();
   await expect(page.getByText('0 / 15 steps',{exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Update Thiền',exact:true}).click();
   await page.getByRole('textbox',{name:'Amount Thiền'}).fill('-1');
@@ -94,10 +96,12 @@ for(const width of [320,390,768,1280]) test(`To do navigation at ${width}`,async
   const box=await nav.boundingBox();
   if(width>=900) expect(box!.y).toBeLessThan(50);
   else expect(box!.y+box!.height).toBe(844);
-  await expect(nav.getByRole('button')).toHaveCount(3);
+  await expect(nav.getByRole('button')).toHaveCount(4);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
   await page.getByRole('button',{name:'Go to Calendar'}).click();
   await expect(page.getByRole('heading',{name:'Calendar',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Go to Habits'}).click();
+  await expect(page.getByRole('heading',{name:'Habits',exact:true})).toBeVisible();
   await page.getByRole('button',{name:'Go to To do'}).click();
   await expect(page.getByRole('heading',{name:'Tasks',exact:true})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Daily habits',exact:true})).toBeVisible();

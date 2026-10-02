@@ -37,12 +37,12 @@ test('task, habit, delete and event popups use the shared entrance and remain in
   await expect(page.getByTestId('task-popup-card')).toBeVisible();
   await page.getByRole('button',{name:'Close task form'}).click();
 
+  await page.getByRole('button',{name:'Go to Habits'}).click();
   await page.getByRole('button',{name:'Add habit'}).click();
   await expect(page.getByTestId('habit-popup-card')).toBeVisible();
   await page.getByRole('textbox',{name:'Habit name'}).fill('Stretch');
   await page.getByRole('button',{name:'Create habit'}).click();
-  await page.getByRole('button',{name:'Manage Stretch'}).click();
-  await page.getByRole('button',{name:'Delete habit'}).click();
+  await page.getByRole('button',{name:'Delete Stretch'}).click();
   await expect(page.getByTestId('delete-popup-card')).toBeVisible();
   await page.getByRole('button',{name:'Cancel'}).click();
 

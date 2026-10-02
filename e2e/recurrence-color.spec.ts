@@ -51,6 +51,7 @@ test('a monthly task recurs on the same calendar day',async({page})=>{
 
 test('habit unit labels follow the target and time is available',async({page})=>{
   await page.goto('/');
+  await page.getByRole('button',{name:'Go to Habits'}).click();
   await page.getByRole('button',{name:'Add habit'}).click();
   const target=page.getByRole('spinbutton',{name:'Daily target'});
   const unit=page.getByRole('spinbutton',{name:'Unit'});
@@ -64,6 +65,7 @@ test('habit unit labels follow the target and time is available',async({page})=>
   await expect(unit).toHaveAttribute('aria-valuetext','time');
   await page.getByRole('textbox',{name:'Habit name'}).fill('Stretch');
   await page.getByRole('button',{name:'Create habit'}).click();
+  await page.getByRole('button',{name:'Go to To do'}).click();
   await expect(page.getByText('0 / 1 time',{exact:true})).toBeVisible();
 });
 

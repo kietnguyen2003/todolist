@@ -10,7 +10,7 @@ test('fresh install is empty and task, habit, progress survive reloading',async(
   await page.goto('/');
   await waitForToday(page);
   await expect(page.getByText('No tasks for this day yet.',{exact:true})).toBeVisible();
-  await expect(page.getByText('No habits for this day yet. Start with one small step.',{exact:true})).toBeVisible();
+  await expect(page.getByText('No habits for this day yet. Add one in Habits.',{exact:true})).toBeVisible();
   await expect(page.getByTestId('today-header-logo')).toBeVisible();
   await page.screenshot({path:'/private/tmp/today-empty-logo.png'});
   await page.getByRole('button',{name:'Go to Calendar',exact:true}).click();
@@ -20,10 +20,12 @@ test('fresh install is empty and task, habit, progress survive reloading',async(
   await page.getByRole('button',{name:'Create task',exact:true}).click();
   await page.getByRole('button',{name:'Go to To do',exact:true}).click();
   await page.getByRole('checkbox',{name:'Công việc của tôi',exact:true}).click();
+  await page.getByRole('button',{name:'Go to Habits',exact:true}).click();
   await page.getByRole('button',{name:'Add habit'}).click();
   await page.getByRole('textbox',{name:'Habit name',exact:true}).fill('Uống đủ nước');
   await page.getByRole('spinbutton',{name:'Daily target',exact:true}).press('ArrowUp');
   await page.getByRole('button',{name:'Create habit',exact:true}).click();
+  await page.getByRole('button',{name:'Go to To do',exact:true}).click();
   await page.getByRole('button',{name:'Increase Uống đủ nước',exact:true}).click();
   await expect(page.getByText('1 / 2 liters',{exact:true})).toBeVisible();
   await expect.poll(async()=>page.evaluate(()=>{

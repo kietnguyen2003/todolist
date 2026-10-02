@@ -8,10 +8,9 @@ import { Copy, SystemFontContext } from './ui';
 import { DURATION_UNIT, formatHabitProgress } from './quantity';
 import { HabitProgress } from './HabitProgress';
 
-export function HabitRow({habit,count,streak,onChange,onEdit,onDelete,reducedMotion=false}:{habit:Habit;count:number;streak:number;onChange:(count:number)=>void;onEdit:()=>void;onDelete:()=>void;reducedMotion?:boolean}) {
+export function HabitRow({habit,count,streak,onChange,reducedMotion=false}:{habit:Habit;count:number;streak:number;onChange:(count:number)=>void;reducedMotion?:boolean}) {
   const useSystemFont=useContext(SystemFontContext);
   const [editing,setEditing]=useState(false);
-  const [menuOpen,setMenuOpen]=useState(false);
   const [cardWidth,setCardWidth]=useState(0);
   const [draft,setDraft]=useState(String(count));
   const [error,setError]=useState('');
@@ -47,13 +46,8 @@ export function HabitRow({habit,count,streak,onChange,onEdit,onDelete,reducedMot
         <Ionicons name="flame" size={20} color={complete?COLORS.streakActive:COLORS.white} accessible={false}/>
         <Copy weight="bold" style={[styles.streakCount,complete && styles.streakCountComplete]}>{streak}</Copy>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Manage ${habit.name}`} aria-expanded={menuOpen} onPress={()=>setMenuOpen(open=>!open)} style={styles.manage}><Feather name="more-vertical" size={18} color={COLORS.card}/></Pressable>
     </View>
     <HabitProgress name={habit.name} count={count} target={habit.target} unit={habit.unit} reducedMotion={reducedMotion}/>
-    {menuOpen&&<View style={styles.menu}>
-      <Pressable accessibilityRole="button" onPress={()=>{setMenuOpen(false);onEdit();}} style={styles.menuButton}><Feather name="edit-2" size={16} color={COLORS.card}/><Copy weight="semibold">Edit habit</Copy></Pressable>
-      <Pressable accessibilityRole="button" onPress={()=>{setMenuOpen(false);onDelete();}} style={styles.menuButton}><Feather name="trash-2" size={16} color={COLORS.errorInk}/><Copy weight="semibold" style={styles.deleteText}>Delete habit</Copy></Pressable>
-    </View>}
     {editing && <View style={styles.editor}>
       <Copy>{duration ? 'Time completed (total minutes)' : `Amount completed (${habit.unit})`}</Copy>
       <View style={styles.row}>
@@ -75,7 +69,6 @@ const styles=StyleSheet.create({
   quantity:{minHeight:44,justifyContent:'center',alignSelf:'flex-start',borderRadius:6},quantityPressed:{opacity:0.65},controls:{flexDirection:'row',gap:4},
   status:{fontSize:10,lineHeight:15,color:COLORS.paperText},statusComplete:{color:COLORS.streakActive},step:{width:44,height:44,borderRadius:14,backgroundColor:COLORS.background,alignItems:'center',justifyContent:'center'},
   add:{backgroundColor:COLORS.accent},disabled:{opacity:0.4},edit:{minHeight:44,justifyContent:'center',paddingHorizontal:7},
-  manage:{width:40,minHeight:44,alignItems:'center',justifyContent:'center'},menu:{flexDirection:'row',gap:8},menuButton:{flex:1,minHeight:44,borderRadius:12,backgroundColor:COLORS.background,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:6},deleteText:{color:COLORS.errorInk},
   editor:{gap:10},input:{flex:1,minWidth:0,borderWidth:1,borderColor:COLORS.paperText,borderRadius:12,padding:12,color:COLORS.card,fontSize:16},
   save:{backgroundColor:COLORS.card,padding:14,borderRadius:12},saveText:{color:COLORS.white},error:{color:COLORS.errorInk,fontSize:12},
 });
